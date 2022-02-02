@@ -38,8 +38,8 @@ float normalFiltering(float roughness, const vec3 worldNormal) {
 
     vec3 du = dFdx(worldNormal);
     vec3 dv = dFdy(worldNormal);
-	float _specularAntiAliasingVariance = 10.0;
-	float _specularAntiAliasingThreshold = 0.2;
+	float _specularAntiAliasingVariance = 2.0;
+	float _specularAntiAliasingThreshold = 0.01;
     float variance = _specularAntiAliasingVariance * (dot(du, du) + dot(dv, dv));
 
     float kernelRoughness = min(2.0 * variance, _specularAntiAliasingThreshold);
@@ -53,26 +53,12 @@ float DiffusePhong() {
 }
 
 vec3 DiffuseCustom(float NdL) {
-    float saturatedNdL = saturate(1.0 * NdL);
+    float saturatedNdL = saturate(8.0 * NdL);
     return mix(vec3(0.0), vec3(1.0), vec3(saturatedNdL));
 }
 
 vec3 FresnelFactor(vec3 f0, float product) {
     return mix(f0, vec3(1.0), pow(1.01 - product, 5.0));
-}
-
-float DBlinn(in float roughness, in float NdH) {
-    float m = roughness * roughness;
-    float m2 = m * m;
-    float n = 2.0 / m2 - 2.0;
-    return (n + 2.0) / (2.0 * PI) * pow(NdH, n);
-}
-
-float DBeckmann(in float roughness, in float NdH) {
-    float m = roughness * roughness;
-    float m2 = m * m;
-    float NdH2 = NdH * NdH;
-    return exp((NdH2 - 1.0) / (m2 * NdH2)) / (PI * m2 * NdH2 * NdH2);
 }
 
 float DGGX(in float roughness, in float NdH) {
@@ -89,33 +75,8 @@ float GSchlick(in float roughness, in float NdV, in float NdL) {
     return 0.25 / (V * L);
 }
 
-vec3 SpecularPhong(in vec3 V, in vec3 L, in vec3 N, in vec3 specular, in float roughness) {
-    vec3 R = reflect(-L, N);
-    float spec = max(0.0, dot(V, R));
-
-    float k = 1.999 / (roughness * roughness);
-
-    return min(1.0, 3.0 * 0.0398 * k) * pow(spec, min(10000.0, k)) * specular;
-}
-
-vec3 SpecularBlinn(in float NdH, in vec3 specular, in float roughness) {
-    float k = 1.999 / (roughness * roughness);
-    
-    return min(1.0, 3.0 * 0.0398 * k) * pow(NdH, min(10000.0, k)) * specular;
-}
-
 vec3 SpecularCook(in float NdL, in float NdV, in float NdH, in vec3 specular, in float roughness) {
-    float D = 0.0;
-    #ifdef USE_COOK_BLINN
-        D = DBlinn(roughness, NdH);
-    #endif
-    #ifdef USE_COOK_BECKMANN
-        D = DBeckmann(roughness, NdH);
-    #endif
-    #ifdef USE_COOK_GGX
-        D = DGGX(roughness, NdH);
-    #endif
-
+    float D = DGGX(roughness, NdH);
     float G = GSchlick(roughness, NdV, NdL);
 
     float rimFactor = 1.0;

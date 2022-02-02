@@ -1,28 +1,28 @@
 import React from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, useThree } from '@react-three/fiber';
 import { useNormalTexture, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
 import frag from './custom.frag';
 import vert from './custom.vert';
 import { useStore } from '@/store';
+import { useControls } from 'leva';
 
 const materialKey = Math.random();
 
 export function CustomMaterial(props) {
-	const {
-		color = '#ffffff',
-		metalness = 0.5,
-		roughness = 0.5,
-		normalScale = 0,
-		type = 'cook',
-		cookType = 'ggx',
-	} = props;
+	const { color = '#ffffff', metalness = 0.5, roughness = 0.5, normalScale = 0 } = props;
+
+	const scene = useThree(({ scene }) => scene);
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
-	const envTexture = useTexture('/assets/textures/env.jpg');
-	const [normalTexture] = useNormalTexture(20);
+
+	const { normalMap } = useControls({
+		normalMap: { value: 73, min: 0, max: 74, step: 1 },
+	});
+
+	const [normalTexture] = useNormalTexture(normalMap);
 
 	const material = React.useMemo(() => {
 		const uniforms = THREE.UniformsUtils.merge([
@@ -67,17 +67,9 @@ export function CustomMaterial(props) {
 		mat.defines.USE_METALNESS_MAP = false;
 		mat.defines.USE_NORMAL_MAP = true;
 		mat.defines.USE_ENV_MAP = true;
-		mat.defines.USE_PHONG = type === 'phong';
-		mat.defines.USE_BLINN = type === 'blinn';
-		mat.defines.USE_COOK = type === 'cook';
-		if (mat.defines.USE_COOK) {
-			mat.defines.USE_COOK_BLINN = cookType === 'blinn';
-			mat.defines.USE_COOK_BECKMANN = cookType === 'beckmann';
-			mat.defines.USE_COOK_GGX = cookType === 'ggx';
-		}
 
 		return mat;
-	}, [materialKey, metalness, roughness, normalScale, type]);
+	}, [materialKey, metalness, roughness, normalScale]);
 
 	React.useEffect(() => {
 		material.uniforms.u_color.value.set(color);
@@ -101,17 +93,13 @@ export function CustomMaterial(props) {
 		material.uniforms.u_iblTexture.value = iblTexture;
 	}, [material, iblTexture]);
 
-	React.useEffect(() => {
-		envTexture.wrapS = envTexture.wrapT = THREE.RepeatWrapping;
-		envTexture.mapping = THREE.EquirectangularReflectionMapping;
-		material.uniforms.u_envTexture.value = envTexture;
-		material.uniforms.u_envTextureSize.value.set(
-			envTexture.image.width,
-			envTexture.image.height,
-		);
-	}, [material, envTexture]);
-
 	useFrame((_, dt) => {
+		material.uniforms.u_envTexture.value = scene.environment;
+		material.uniforms.u_envTextureSize.value.set(
+			scene.environment.image.width,
+			scene.environment.image.height,
+		);
+
 		material.uniforms.u_deltaTime.value = dt;
 		material.uniforms.u_time.value += dt;
 

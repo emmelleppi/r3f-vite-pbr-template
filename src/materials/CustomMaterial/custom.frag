@@ -33,6 +33,7 @@ varying vec3 v_worldNormal;
 
 void main() {
     float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;
+    vec3 blueNoise = getBlueNoise(gl_FragCoord.xy);
 
     float roughness = u_roughness;
     #ifdef USE_ROUGHNESS_MAP
@@ -63,7 +64,7 @@ void main() {
 
     #ifdef USE_ENV_MAP
         vec3 envDiffuse = texture2D(u_envTexture, equirectUv(N), 10.0).xyz;
-        vec3 refl = reflect(-V, N); 
+        vec3 refl = normalize(reflect(-V, N) + 0.001 * (blueNoise - 0.5)); 
         vec2 reflUv = mod(equirectUv(refl), 1.0);
         float lod = mipMapLevel(reflUv * u_envTextureSize);
         vec3 envSpecular = texture2D(u_envTexture, reflUv, max(roughness * 11.0, lod)).xyz;
@@ -86,17 +87,7 @@ void main() {
     #endif
 
     vec3 specularFactor = vec3(0.0);
-    #ifdef USE_PHONG
-        specularFactor = SpecularPhong(V, L, N, specularFresnel, roughness);
-    #endif
-    
-    #ifdef USE_BLINN
-        specularFactor = SpecularBlinn(NdH, specularFresnel, roughness);
-    #endif 
-    
-    #ifdef USE_COOK
-        specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, max(1e-3, roughness));
-    #endif 
+    specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, max(1e-3, roughness));
     specularFactor *= vec3(NdL);
 
     #ifdef USE_ENV_MAP

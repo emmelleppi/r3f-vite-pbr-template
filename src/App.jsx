@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { OrbitControls } from '@react-three/drei';
+import { Environment, OrbitControls } from '@react-three/drei';
 import { useControls } from 'leva';
 
 function Light() {
@@ -49,13 +49,26 @@ function Light() {
 function Scene() {
 	const ref = React.useRef();
 
-	const { normalRepeatFactor, normalScale, metalness, roughness, type, cookType } = useControls({
-		normalScale: { value: 0.4, min: 0, max: 1, step: 0.01 },
-		normalRepeatFactor: { value: 1, min: 0, max: 4, step: 0.01 },
-		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
+	const { color, normalRepeatFactor, normalScale, metalness, roughness, envMap } = useControls({
+		color: '#e55656',
+		envMap: {
+			options: [
+				'studio',
+				'sunset',
+				'dawn',
+				'night',
+				'warehouse',
+				'forest',
+				'apartment',
+				'city',
+				'park',
+				'lobby',
+			],
+		},
 		roughness: { value: 0, min: 0, max: 1, step: 0.01 },
-		type: { options: ['phong', 'blinn', 'cook'] },
-		cookType: { options: ['blinn', 'beckmann', 'ggx'] },
+		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
+		normalScale: { value: 0.65, min: 0, max: 1, step: 0.01 },
+		normalRepeatFactor: { value: 3, min: 0, max: 4, step: 0.01 },
 	});
 
 	useFrame(() => {
@@ -69,14 +82,7 @@ function Scene() {
 		<>
 			<mesh ref={ref} castShadow receiveShadow>
 				<torusKnotBufferGeometry args={[1, 0.45, 128, 128]} />
-				<CustomMaterial
-					color="hotpink"
-					normalScale={0.2}
-					metalness={0}
-					roughness={1}
-					type={type}
-					cookType={cookType}
-				/>
+				<CustomMaterial color={color} />
 			</mesh>
 			<mesh receiveShadow position={[0, 0, -5]}>
 				<planeBufferGeometry args={[20, 20]} />
@@ -84,6 +90,7 @@ function Scene() {
 			</mesh>
 			<Light />
 			<SceneManager />
+			<Environment preset={envMap} />
 		</>
 	);
 }
