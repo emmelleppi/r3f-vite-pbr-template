@@ -1,0 +1,25 @@
+/build/
+/dist/
+/dist-ssr/
+
+# environment
+/.env
+
+# dependencies
+node_modules/
+
+# lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# editor settings
+/.vscode/
+/.jshint*
+jsconfig.json
+
+.DS_Store
+*.local
+*.log*
+logs
+tmp
