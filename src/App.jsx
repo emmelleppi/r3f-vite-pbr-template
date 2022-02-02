@@ -7,7 +7,6 @@ import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
 import { OrbitControls } from '@react-three/drei';
 import { useControls } from 'leva';
-import { Environment } from './utils/Environment';
 
 function Light() {
 	const [light, setLight] = React.useState();
@@ -29,11 +28,11 @@ function Light() {
 				intensity={1}
 				position={[10, 10, 10]}
 				shadow-camera-near={0.1}
-				shadow-camera-far={100}
-				shadow-camera-right={30}
-				shadow-camera-left={-30}
-				shadow-camera-top={30}
-				shadow-camera-bottom={-30}
+				shadow-camera-far={30}
+				shadow-camera-right={10}
+				shadow-camera-left={-10}
+				shadow-camera-top={10}
+				shadow-camera-bottom={-10}
 				shadow-mapSize-width={512}
 				shadow-mapSize-height={512}
 				shadow-bias={0.0001}
@@ -69,7 +68,7 @@ function Scene() {
 	return (
 		<>
 			<mesh ref={ref} castShadow receiveShadow>
-				<torusKnotBufferGeometry args={[1, 0.45, 128, 128]} />
+				<torusKnotBufferGeometry args={[1, 0.45, 128, 32]} />
 				<CustomMaterial color={color} />
 			</mesh>
 			<mesh receiveShadow position={[0, 0, -5]}>
