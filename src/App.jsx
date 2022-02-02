@@ -5,8 +5,9 @@ import * as THREE from 'three';
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { Environment, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { useControls } from 'leva';
+import { Environment } from './utils/Environment';
 
 function Light() {
 	const [light, setLight] = React.useState();
@@ -49,22 +50,9 @@ function Light() {
 function Scene() {
 	const ref = React.useRef();
 
-	const { color, normalRepeatFactor, normalScale, metalness, roughness, envMap } = useControls({
+	const { color, normalRepeatFactor, normalScale, metalness, roughness } = useControls({
 		color: '#e55656',
-		envMap: {
-			options: [
-				'studio',
-				'sunset',
-				'dawn',
-				'night',
-				'warehouse',
-				'forest',
-				'apartment',
-				'city',
-				'park',
-				'lobby',
-			],
-		},
+
 		roughness: { value: 0, min: 0, max: 1, step: 0.01 },
 		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
 		normalScale: { value: 0.65, min: 0, max: 1, step: 0.01 },
@@ -90,7 +78,6 @@ function Scene() {
 			</mesh>
 			<Light />
 			<SceneManager />
-			<Environment preset={envMap} />
 		</>
 	);
 }

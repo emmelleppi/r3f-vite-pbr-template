@@ -17,6 +17,7 @@ export function CustomMaterial(props) {
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
+	const envTexture = useTexture('/assets/textures/env.jpg');
 
 	const { normalMap } = useControls({
 		normalMap: { value: 73, min: 0, max: 74, step: 1 },
@@ -93,13 +94,17 @@ export function CustomMaterial(props) {
 		material.uniforms.u_iblTexture.value = iblTexture;
 	}, [material, iblTexture]);
 
-	useFrame((_, dt) => {
-		material.uniforms.u_envTexture.value = scene.environment;
+	React.useEffect(() => {
+		envTexture.wrapS = envTexture.wrapT = THREE.RepeatWrapping;
+		envTexture.mapping = THREE.EquirectangularReflectionMapping;
+		material.uniforms.u_envTexture.value = envTexture;
 		material.uniforms.u_envTextureSize.value.set(
-			scene.environment.image.width,
-			scene.environment.image.height,
+			envTexture.image.width,
+			envTexture.image.height,
 		);
+	}, [material, envTexture]);
 
+	useFrame((_, dt) => {
 		material.uniforms.u_deltaTime.value = dt;
 		material.uniforms.u_time.value += dt;
 

@@ -87,7 +87,7 @@ void main() {
     #endif
 
     vec3 specularFactor = vec3(0.0);
-    specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, max(1e-3, roughness));
+    specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, max(1e-6, roughness));
     specularFactor *= vec3(NdL);
 
     #ifdef USE_ENV_MAP
