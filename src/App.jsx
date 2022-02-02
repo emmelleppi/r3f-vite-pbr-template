@@ -6,6 +6,7 @@ import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
 import { OrbitControls } from '@react-three/drei';
+import { useControls } from 'leva';
 
 function Light() {
 	const [light, setLight] = React.useState();
@@ -38,17 +39,28 @@ function Light() {
 function Scene() {
 	const ref = React.useRef();
 
+	const { normalRepeatFactor, normalScale, metalness, roughness } = useControls({
+		normalScale: { value: 0, min: 0, max: 1, step: 0.01 },
+		normalRepeatFactor: { value: 0, min: 0, max: 4, step: 0.01 },
+		metalness: { value: 0, min: 0, max: 1, step: 0.01 },
+		roughness: { value: 0, min: 0, max: 1, step: 0.01 },
+	});
+
 	useFrame(() => {
 		ref.current.rotation.x += 0.01;
 		ref.current.rotation.y += 0.01;
 		ref.current.rotation.z += 0.01;
+		ref.current.material.uniforms.u_metalness.value = metalness;
+		ref.current.material.uniforms.u_roughness.value = roughness;
+		ref.current.material.uniforms.u_normalScale.value = normalScale;
+		ref.current.material.uniforms.u_normalRepeatFactor.value = normalRepeatFactor;
 	});
 
 	return (
 		<>
 			<mesh ref={ref} castShadow receiveShadow>
 				<torusKnotBufferGeometry args={[1, 0.45, 128, 128]} />
-				<CustomMaterial color="hotpink" normalScale={0.2} metalness={1} roughness={0.3} />
+				<CustomMaterial color="hotpink" normalScale={0.2} metalness={0} roughness={1} />
 			</mesh>
 			<mesh receiveShadow position={[0, 0, -5]}>
 				<planeBufferGeometry args={[20, 20]} />

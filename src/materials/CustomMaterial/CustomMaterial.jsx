@@ -30,16 +30,18 @@ export function CustomMaterial(props) {
 
 				u_lightDirection: { value: new THREE.Vector3() },
 				u_lightPosition: { value: new THREE.Vector3() },
-				u_ambientLight: { value: new THREE.Vector3() },
+				u_ambientLight: { value: new THREE.Vector3(0, 0, 0) },
 
 				u_normalTexture: { value: null },
 				u_normalScale: { value: normalScale },
+				u_normalRepeatFactor: { value: 1 },
 
 				u_blueNoiseTexture: { value: null },
 				u_blueNoiseTexelSize: { value: new THREE.Vector2() },
 
 				u_iblTexture: { value: null },
 				u_envTexture: { value: null },
+				u_envTextureSize: { value: new THREE.Vector2() },
 			},
 			THREE.UniformsLib.lights,
 		]);
@@ -94,6 +96,10 @@ export function CustomMaterial(props) {
 
 	React.useEffect(() => {
 		material.uniforms.u_envTexture.value = envTexture;
+		material.uniforms.u_envTextureSize.value.set(
+			envTexture.image.width,
+			envTexture.image.height,
+		);
 	}, [material, envTexture]);
 
 	useFrame((_, dt) => {

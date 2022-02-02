@@ -16,6 +16,14 @@ vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 mapN, float faceDirec
     return normalize( T * ( mapN.x * scale ) + B * ( mapN.y * scale ) + N * mapN.z );
 }
 
+float mipMapLevel(in vec2 texture_coordinate) {
+    vec2  dx_vtc        = dFdx(texture_coordinate);
+    vec2  dy_vtc        = dFdy(texture_coordinate);
+    float delta_max_sqr = max(dot(dx_vtc, dx_vtc), dot(dy_vtc, dy_vtc));
+    float mml = 0.5 * log2(delta_max_sqr);
+    return max( 0.0, mml ); 
+}
+
 float DiffusePhong() {
     return (1.0 / PI);
 }
