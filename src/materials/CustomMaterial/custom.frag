@@ -55,20 +55,19 @@ void main() {
         N = normalize( v_normal ) * faceDirection;
         N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
         N = inverseTransformDirection(normalMatrix * N, viewMatrix);
+        roughness = normalFiltering(roughness, N);
     #endif
 
     float NdL = max(0.0, dot(N, L));
     float NdV = max(0.001, dot(N, V));
     float NdH = max(0.001, dot(N, H));
-    float HdV = max(0.001, dot(H, V));
-    float LdV = max(0.001, dot(L, V));
 
     #ifdef USE_ENV_MAP
         vec3 envDiffuse = texture2D(u_envTexture, equirectUv(N), 10.0).xyz;
-        vec3 refl = reflect(-V, N);
+        vec3 refl = reflect(-V, N); 
         vec2 reflUv = equirectUv(refl);
         float lod = mipMapLevel(reflUv * u_envTextureSize);
-        vec3 envSpecular = texture2D(u_envTexture, reflUv, max(roughness * 11.0, lod)).xyz;
+        vec3 envSpecular = texture2D(u_envTexture, mod(reflUv, 1.0), max(roughness * 11.0, lod)).xyz;
     #endif
 
     vec3 color = u_color;
@@ -80,8 +79,8 @@ void main() {
     vec3 ambient = u_ambientLight;
 
     vec3 specular = mix(vec3(0.04), base, metalness);
-    vec3 specularFresnel = FresnelFactor(specular, NdV);
-
+    vec3 specularFresnel = FresnelFactor(specular, max(0.001, dot(N, V)));
+    
     vec3 diffuseFactor = (vec3(1.0) - specularFresnel) * DiffuseCustom(NdL) * NdL;
     #ifdef USE_ENV_MAP
         diffuseFactor += envDiffuse * (1.0 / PI);
@@ -97,7 +96,7 @@ void main() {
     #endif 
     
     #ifdef USE_COOK
-        specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, roughness);
+        specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, max(1e-3, roughness));
     #endif 
     specularFactor *= vec3(NdL);
 
@@ -109,7 +108,7 @@ void main() {
 
     outgoingLight += ambient * base;
     outgoingLight += diffuseFactor * mix(base, vec3(0.0), metalness);
-    outgoingLight += specularFactor;
+    outgoingLight += specularFactor * base;
 
     gl_FragColor = vec4(vec3(outgoingLight), 1.0);
 

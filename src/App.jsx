@@ -13,6 +13,13 @@ function Light() {
 
 	React.useEffect(() => useStore.setState((draft) => (draft.light = light)), [light]);
 
+	useFrame(({ clock }) => {
+		const time = clock.getElapsedTime();
+		light.position.x = 4 * Math.sin(time);
+		light.position.y = 4 * Math.cos(time);
+		light.position.z = 4 * Math.sin(time);
+	});
+
 	return (
 		<>
 			<directionalLight
@@ -31,6 +38,9 @@ function Light() {
 				shadow-bias={0.0001}
 			>
 				<mesh attach="target" position={[0, 0, 0]} />
+				<mesh material-color="red">
+					<sphereBufferGeometry args={[0.1, 32, 32]} />
+				</mesh>
 			</directionalLight>
 		</>
 	);
@@ -39,17 +49,16 @@ function Light() {
 function Scene() {
 	const ref = React.useRef();
 
-	const { normalRepeatFactor, normalScale, metalness, roughness } = useControls({
-		normalScale: { value: 0, min: 0, max: 1, step: 0.01 },
-		normalRepeatFactor: { value: 0, min: 0, max: 4, step: 0.01 },
-		metalness: { value: 0, min: 0, max: 1, step: 0.01 },
+	const { normalRepeatFactor, normalScale, metalness, roughness, type, cookType } = useControls({
+		normalScale: { value: 0.4, min: 0, max: 1, step: 0.01 },
+		normalRepeatFactor: { value: 1, min: 0, max: 4, step: 0.01 },
+		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
 		roughness: { value: 0, min: 0, max: 1, step: 0.01 },
+		type: { options: ['phong', 'blinn', 'cook'] },
+		cookType: { options: ['blinn', 'beckmann', 'ggx'] },
 	});
 
 	useFrame(() => {
-		ref.current.rotation.x += 0.01;
-		ref.current.rotation.y += 0.01;
-		ref.current.rotation.z += 0.01;
 		ref.current.material.uniforms.u_metalness.value = metalness;
 		ref.current.material.uniforms.u_roughness.value = roughness;
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
@@ -60,7 +69,14 @@ function Scene() {
 		<>
 			<mesh ref={ref} castShadow receiveShadow>
 				<torusKnotBufferGeometry args={[1, 0.45, 128, 128]} />
-				<CustomMaterial color="hotpink" normalScale={0.2} metalness={0} roughness={1} />
+				<CustomMaterial
+					color="hotpink"
+					normalScale={0.2}
+					metalness={0}
+					roughness={1}
+					type={type}
+					cookType={cookType}
+				/>
 			</mesh>
 			<mesh receiveShadow position={[0, 0, -5]}>
 				<planeBufferGeometry args={[20, 20]} />
@@ -77,7 +93,7 @@ export function App() {
 		<div id="app">
 			<Canvas
 				dpr={[1, 2]}
-				shadows={{ enabled: true, type: THREE.PCFShadowMap }}
+				shadows={{ enabled: true, cookType: THREE.PCFShadowMap }}
 				gl={{
 					powerPreference: 'high-performance',
 					antialias: false,

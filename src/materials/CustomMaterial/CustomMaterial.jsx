@@ -10,7 +10,14 @@ import { useStore } from '@/store';
 const materialKey = Math.random();
 
 export function CustomMaterial(props) {
-	const { color = '#ffffff', metalness = 0.5, roughness = 0.5, normalScale = 0 } = props;
+	const {
+		color = '#ffffff',
+		metalness = 0.5,
+		roughness = 0.5,
+		normalScale = 0,
+		type = 'cook',
+		cookType = 'ggx',
+	} = props;
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
@@ -60,17 +67,17 @@ export function CustomMaterial(props) {
 		mat.defines.USE_METALNESS_MAP = false;
 		mat.defines.USE_NORMAL_MAP = true;
 		mat.defines.USE_ENV_MAP = true;
-		mat.defines.USE_PHONG = true;
-		mat.defines.USE_BLINN = false;
-		mat.defines.USE_COOK = false;
+		mat.defines.USE_PHONG = type === 'phong';
+		mat.defines.USE_BLINN = type === 'blinn';
+		mat.defines.USE_COOK = type === 'cook';
 		if (mat.defines.USE_COOK) {
-			mat.defines.USE_COOK_BLINN = true;
-			mat.defines.USE_COOK_BECKMANN = false;
-			mat.defines.USE_COOK_GGX = false;
+			mat.defines.USE_COOK_BLINN = cookType === 'blinn';
+			mat.defines.USE_COOK_BECKMANN = cookType === 'beckmann';
+			mat.defines.USE_COOK_GGX = cookType === 'ggx';
 		}
 
 		return mat;
-	}, [materialKey, metalness, roughness, normalScale]);
+	}, [materialKey, metalness, roughness, normalScale, type]);
 
 	React.useEffect(() => {
 		material.uniforms.u_color.value.set(color);
@@ -80,8 +87,8 @@ export function CustomMaterial(props) {
 		bluenoiseTexture.wrapS = bluenoiseTexture.wrapT = THREE.RepeatWrapping;
 		material.uniforms.u_blueNoiseTexture.value = bluenoiseTexture;
 		material.uniforms.u_blueNoiseTexelSize.value.set(
-			bluenoiseTexture.image.width,
-			bluenoiseTexture.image.height,
+			1 / bluenoiseTexture.image.width,
+			1 / bluenoiseTexture.image.height,
 		);
 	}, [material, bluenoiseTexture]);
 
@@ -95,6 +102,8 @@ export function CustomMaterial(props) {
 	}, [material, iblTexture]);
 
 	React.useEffect(() => {
+		envTexture.wrapS = envTexture.wrapT = THREE.RepeatWrapping;
+		envTexture.mapping = THREE.EquirectangularReflectionMapping;
 		material.uniforms.u_envTexture.value = envTexture;
 		material.uniforms.u_envTextureSize.value.set(
 			envTexture.image.width,

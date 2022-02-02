@@ -44,7 +44,8 @@ function usePostprocessing() {
 		});
 
 		composer.addPass(renderPass);
-		composer.addPass(new EffectPass(camera, SMAA, BLOOM, VIGNETTE));
+		composer.addPass(new EffectPass(camera, SMAA));
+		// composer.addPass(new EffectPass(camera, SMAA, BLOOM, VIGNETTE));
 
 		return [composer, BLOOM, VIGNETTE];
 	}, [gl, scene, camera, smaa]);

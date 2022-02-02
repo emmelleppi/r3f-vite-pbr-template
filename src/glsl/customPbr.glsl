@@ -24,6 +24,30 @@ float mipMapLevel(in vec2 texture_coordinate) {
     return max( 0.0, mml ); 
 }
 
+float normalFiltering(float roughness, const vec3 worldNormal) {
+    // Kaplanyan 2016, "Stable specular highlights"
+    // Tokuyoshi 2017, "Error Reduction and Simplification for Shading Anti-Aliasing"
+    // Tokuyoshi and Kaplanyan 2019, "Improved Geometric Specular Antialiasing"
+
+    // This implementation is meant for deferred rendering in the original paper but
+    // we use it in forward rendering as well (as discussed in Tokuyoshi and Kaplanyan
+    // 2019). The main reason is that the forward version requires an expensive transform
+    // of the half vector by the tangent frame for every light. This is therefore an
+    // approximation but it works well enough for our needs and provides an improvement
+    // over our original implementation based on Vlachos 2015, "Advanced VR Rendering".
+
+    vec3 du = dFdx(worldNormal);
+    vec3 dv = dFdy(worldNormal);
+	float _specularAntiAliasingVariance = 10.0;
+	float _specularAntiAliasingThreshold = 0.1;
+    float variance = _specularAntiAliasingVariance * (dot(du, du) + dot(dv, dv));
+
+    float kernelRoughness = min(2.0 * variance, _specularAntiAliasingThreshold);
+    float squareRoughness = clamp(roughness * roughness + kernelRoughness, 0.0, 1.0);
+
+    return sqrt(squareRoughness);
+}
+
 float DiffusePhong() {
     return (1.0 / PI);
 }
@@ -97,5 +121,5 @@ vec3 SpecularCook(in float NdL, in float NdV, in float NdH, in vec3 specular, in
     float rimFactor = 1.0;
     float rim = mix(1.0 - roughness * rimFactor * 0.9, 1.0, NdV);
 
-    return (1.0 / rim) * specular * G * D;
+    return  (1.0 / rim) * specular * G * D;
 }
