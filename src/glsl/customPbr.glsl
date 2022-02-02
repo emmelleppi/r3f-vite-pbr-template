@@ -39,7 +39,7 @@ float normalFiltering(float roughness, const vec3 worldNormal) {
     vec3 du = dFdx(worldNormal);
     vec3 dv = dFdy(worldNormal);
 	float _specularAntiAliasingVariance = 10.0;
-	float _specularAntiAliasingThreshold = 0.1;
+	float _specularAntiAliasingThreshold = 0.2;
     float variance = _specularAntiAliasingVariance * (dot(du, du) + dot(dv, dv));
 
     float kernelRoughness = min(2.0 * variance, _specularAntiAliasingThreshold);
