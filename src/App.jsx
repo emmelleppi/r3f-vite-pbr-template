@@ -33,8 +33,8 @@ function Light() {
 				shadow-camera-left={-30}
 				shadow-camera-top={30}
 				shadow-camera-bottom={-30}
-				shadow-mapSize-width={1024}
-				shadow-mapSize-height={1024}
+				shadow-mapSize-width={512}
+				shadow-mapSize-height={512}
 				shadow-bias={0.0001}
 			>
 				<mesh attach="target" position={[0, 0, 0]} />
