@@ -1,0 +1,38 @@
+{
+	"version": "0.0.10",
+	"dependencies": {
+		"@react-three/drei": "^8.8.1",
+		"@react-three/fiber": "^7.0.26",
+		"glsl-blend": "^1.0.3",
+		"glsl-easings": "^1.0.0",
+		"glsl-noise": "^0.0.0",
+		"immer": "^9.0.7",
+		"leva": "^0.9.16",
+		"postprocessing": "^6.23.5",
+		"react": "^17.0.2",
+		"react-device-detect": "^2.1.2",
+		"react-dom": "^17.0.2",
+		"rfs": "^9.0.6",
+		"three": "^0.136.0",
+		"three-stdlib": "^2.8.4",
+		"zustand": "^3.6.9"
+	},
+	"devDependencies": {
+		"@vitejs/plugin-react": "^1.1.0",
+		"@vitejs/plugin-react-refresh": "^1.3.6",
+		"autoprefixer": "^10.4.0",
+		"less": "^4.1.2",
+		"postcss-import-url": "^7.0.0",
+		"prettier": "^2.4.1",
+		"rollup-plugin-glslify": "^1.2.1",
+		"vite": "^2.6.14",
+		"vite-aliases": "^0.8.7",
+		"vite-plugin-html": "^2.1.1"
+	},
+	"scripts": {
+		"build": "vite build",
+		"dev": "vite",
+		"start-server": "node server.js",
+		"prettier": "prettier --loglevel \"silent\" --write \"src/**/*.{js,json,html,less}\""
+	}
+}

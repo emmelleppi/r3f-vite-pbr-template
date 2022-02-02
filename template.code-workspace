@@ -1,0 +1,38 @@
+{
+	"folders": [{ "path": "." }],
+	"settings": {
+		"search.quickOpen.includeHistory": false,
+		"search.exclude": {
+			"**/build/*": true,
+			"**/public/*": true
+		},
+
+		// formatter
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
+		"editor.formatOnSave": true,
+
+		"[html]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[javascriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[less]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+		"[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" }
+	},
+	"extensions": {
+		"recommendations": [
+			/**
+			 * go to extensions tab and search for `@recommended`
+			 * or run `workbench.extensions.action.showRecommendedExtensions` command
+			 */
+
+			"esbenp.prettier-vscode", // required for defult-auto formatter
+			"editorconfig.editorconfig", // helps vscode recognize and apply .editorconfig for additional settings
+			"eamodio.gitlens", // enchanced git features
+			"ms-vsliveshare.vsliveshare", // real-time code sharing and collaboration
+			"visualstudioexptteam.vscodeintellicode", // improved intellisense and code hinting
+			"github.vscode-pull-request-github"
+		]
+	}
+}
