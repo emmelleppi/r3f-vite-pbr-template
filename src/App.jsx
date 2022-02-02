@@ -74,7 +74,7 @@ function Scene() {
 			</mesh>
 			<mesh receiveShadow position={[0, 0, -5]}>
 				<planeBufferGeometry args={[20, 20]} />
-				<CustomMaterial color="white" metalness={0} roughness={0.3} />
+				<CustomMaterial color="white" />
 			</mesh>
 			<Light />
 			<SceneManager />

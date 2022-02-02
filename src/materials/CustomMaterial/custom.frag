@@ -1,3 +1,4 @@
+uniform float u_time;
 uniform float u_metalness;
 uniform float u_roughness;
 uniform float u_normalScale;
@@ -64,7 +65,7 @@ void main() {
 
     #ifdef USE_ENV_MAP
         vec3 envDiffuse = texture2D(u_envTexture, equirectUv(N), 10.0).xyz;
-        vec3 refl = normalize(reflect(-V, N) + 0.001 * (blueNoise - 0.5)); 
+        vec3 refl = reflect(-V, N);
         vec2 reflUv = mod(equirectUv(refl), 1.0);
         float lod = mipMapLevel(reflUv * u_envTextureSize);
         vec3 envSpecular = texture2D(u_envTexture, reflUv, max(roughness * 11.0, lod)).xyz;
