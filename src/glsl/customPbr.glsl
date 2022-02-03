@@ -1,3 +1,5 @@
+#define MEDIUMP_FLT_MAX    65504.0
+#define saturateMediump(x) min(x, MEDIUMP_FLT_MAX)
 
 vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 mapN, float faceDirection, float normalScale ) {
     // Workaround for Adreno 3XX dFd*( vec3 ) bug. See #9988
@@ -48,39 +50,51 @@ float normalFiltering(float roughness, const vec3 worldNormal) {
     return sqrt(squareRoughness);
 }
 
-float DiffusePhong() {
-    return (1.0 / PI);
+
+// Fresnel - Specular F
+float F_Schlick(float u, float f0, float f90) {
+    return f0 + (f90 - f0) * pow(1.0 - u, 5.0);
 }
 
-vec3 DiffuseCustom(float NdL) {
-    float saturatedNdL = saturate(8.0 * NdL);
-    return mix(vec3(0.0), vec3(1.0), vec3(saturatedNdL));
+vec3 F_SchlickFast(vec3 f0, float product) {
+    return mix(f0, vec3(1.0), pow(1.0 - product, 5.0));
 }
 
-vec3 FresnelFactor(vec3 f0, float product) {
-    return mix(f0, vec3(1.0), pow(1.01 - product, 5.0));
+
+// Geometric shadowing - Specular G
+float V_SmithGGXCorrelatedFast(float NoV, float NoL, float roughness) {
+    float a = roughness;
+    float GGXV = NoL * (NoV * (1.0 - a) + a);
+    float GGXL = NoV * (NoL * (1.0 - a) + a);
+    return 0.5 / (GGXV + GGXL);
 }
 
-float DGGX(in float roughness, in float NdH) {
+
+// Normal distribution functions - Specular D
+float D_GGX(in float roughness, in float NdH) {
     float m = roughness * roughness;
     float m2 = m * m;
     float d = (NdH * m2 - NdH) * NdH + 1.0;
     return m2 / (PI * d * d);
 }
 
-float GSchlick(in float roughness, in float NdV, in float NdL) {
-    float k = roughness * roughness * 0.5;
-    float V = NdV * (1.0 - k) + k;
-    float L = NdL * (1.0 - k) + k;
-    return 0.25 / (V * L);
+float D_GGX_Fast(float roughness, float NoH, const vec3 n, const vec3 h) {
+    vec3 NxH = cross(n, h);
+    float a = NoH * roughness;
+    float k = roughness / (dot(NxH, NxH) + a * a);
+    float d = k * k * (1.0 / PI);
+    return saturateMediump(d);
 }
 
-vec3 SpecularCook(in float NdL, in float NdV, in float NdH, in vec3 specular, in float roughness) {
-    float D = DGGX(roughness, NdH);
-    float G = GSchlick(roughness, NdV, NdL);
 
-    float rimFactor = 1.0;
-    float rim = mix(1.0 - roughness * rimFactor * 0.9, 1.0, NdV);
+// Diffuse
+float Fd_Lambert() {
+    return (1.0 / PI);
+}
 
-    return  (1.0 / rim) * specular * G * D;
+float Fd_Burley(float NoV, float NoL, float LoH, float roughness) {
+    float f90 = 0.5 + 2.0 * roughness * LoH * LoH;
+    float lightScatter = F_Schlick(NoL, 1.0, f90);
+    float viewScatter = F_Schlick(NoV, 1.0, f90);
+    return lightScatter * viewScatter * (1.0 / PI);
 }

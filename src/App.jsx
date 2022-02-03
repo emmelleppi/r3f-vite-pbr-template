@@ -28,13 +28,13 @@ function Light() {
 				intensity={1}
 				position={[10, 10, 10]}
 				shadow-camera-near={0.1}
-				shadow-camera-far={30}
-				shadow-camera-right={10}
-				shadow-camera-left={-10}
-				shadow-camera-top={10}
-				shadow-camera-bottom={-10}
-				shadow-mapSize-width={512}
-				shadow-mapSize-height={512}
+				shadow-camera-far={50}
+				shadow-camera-right={30}
+				shadow-camera-left={-30}
+				shadow-camera-top={30}
+				shadow-camera-bottom={-30}
+				shadow-mapSize-width={1024}
+				shadow-mapSize-height={1024}
 				shadow-bias={0.0001}
 			>
 				<mesh attach="target" position={[0, 0, 0]} />

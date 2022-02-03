@@ -36,7 +36,7 @@ void main() {
     float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;
     vec3 blueNoise = getBlueNoise(gl_FragCoord.xy);
 
-    float roughness = u_roughness;
+    float roughness = u_roughness * u_roughness;
     #ifdef USE_ROUGHNESS_MAP
         roughness *= texture2D(u_roughnessTexture, v_uv).r;
     #endif
@@ -59,49 +59,51 @@ void main() {
         roughness = normalFiltering(roughness, N);
     #endif
 
-    float NdL = max(0.0, dot(N, L));
-    float NdV = max(0.001, dot(N, V));
-    float NdH = max(0.001, dot(N, H));
+    float NdV = abs(dot(N, V)) + 1e-5;
+    float NdL = clamp(dot(N, L), 0.0, 1.0);
+    float NdH = clamp(dot(N, H), 0.0, 1.0);
+    float LdH = clamp(dot(L, H), 0.0, 1.0);
+
+    vec3 color = u_color;
+    vec3 baseTexture = vec3(1.0);
+    vec3 base = color * baseTexture;
+    vec3 ambient = base * u_ambientLight;
+
+    vec3 diffuseColor = (1.0 - metalness) * base;
+    vec3 specularColor = mix(vec3(0.04), base, metalness);
+
+    float reflectance = 0.9;
+    vec3 f0 = 0.16 * reflectance * reflectance * (1.0 - metalness) + base * metalness;
+
+    float D = D_GGX_Fast(roughness, NdH, N, H);
+    vec3  F = F_SchlickFast(f0, NdV);
+    float G = V_SmithGGXCorrelatedFast(NdV, NdL, roughness);
+
+    // Specular
+    vec3 Fr = D * G * F;
+
+    // Diffuse
+    vec3 Fd = vec3(Fd_Burley(NdV, NdL, LdH, roughness));
+    Fd *= NdL;
+
+    vec2 brdf = texture2D(u_iblTexture, vec2(roughness, 1.0 - NdV)).xy;
+    vec3 iblspec = min(vec3(0.99), F * brdf.x + brdf.y);
+    
+    vec3 energyCompensation = 1.0 + f0 * (1.0 / iblspec.y - 1.0);
+    Fr *= energyCompensation;
 
     #ifdef USE_ENV_MAP
         vec3 envDiffuse = texture2D(u_envTexture, equirectUv(N), 10.0).xyz;
+        Fd += envDiffuse * (1.0 / PI);
+
         vec3 refl = reflect(-V, N);
         vec2 reflUv = mod(equirectUv(refl), 1.0);
         float lod = mipMapLevel(reflUv * u_envTextureSize);
         vec3 envSpecular = texture2D(u_envTexture, reflUv, max(roughness * 11.0, lod)).xyz;
+        Fr += iblspec * envSpecular;
     #endif
 
-    vec3 color = u_color;
-    vec3 baseTexture = vec3(1.0);
-    vec3 outgoingLight = vec3(0.0);
-
-    vec3 base = color * baseTexture;
-    
-    vec3 ambient = u_ambientLight;
-
-    vec3 specular = mix(vec3(0.04), base, metalness);
-    vec3 specularFresnel = FresnelFactor(specular, max(0.001, dot(N, V)));
-    
-    vec3 diffuseFactor = (vec3(1.0) - specularFresnel) * DiffuseCustom(NdL) * NdL;
-    #ifdef USE_ENV_MAP
-        diffuseFactor += envDiffuse * (1.0 / PI);
-    #endif
-
-    vec3 specularFactor = vec3(0.0);
-    specularFactor = SpecularCook(NdL, NdV, NdH, specularFresnel, max(1e-6, roughness));
-    specularFactor *= vec3(NdL);
-
-    #ifdef USE_ENV_MAP
-        vec2 brdf = texture2D(u_iblTexture, vec2(roughness, 1.0 - NdV)).xy;
-        vec3 iblspec = min(vec3(0.99), FresnelFactor(specular, NdV) * brdf.x + brdf.y);
-        specularFactor += iblspec * envSpecular;
-    #endif
-
-    outgoingLight += ambient * base;
-    outgoingLight += diffuseFactor * mix(base, vec3(0.0), metalness);
-    outgoingLight += specularFactor * base;
-
-    gl_FragColor = vec4(vec3(outgoingLight), 1.0);
+    gl_FragColor = vec4(vec3(Fd * diffuseColor + Fr * specularColor + ambient), 1.0);
 
     #include <customShadows>
     #include <tonemapping_fragment>
