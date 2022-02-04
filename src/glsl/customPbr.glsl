@@ -55,8 +55,14 @@ float normalFiltering(float roughness, const vec3 worldNormal) {
 float F_Schlick(float u, float f0, float f90) {
     return f0 + (f90 - f0) * pow(1.0 - u, 5.0);
 }
+vec3 F_Schlick(float u, vec3 f0, vec3 f90) {
+    return f0 + (f90 - f0) * pow(1.0 - u, 5.0);
+}
 
-vec3 F_SchlickFast(vec3 f0, float product) {
+float F_SchlickFast(float product, float f0) {
+    return mix(f0, 1.0, pow(1.0 - product, 5.0));
+}
+vec3 F_SchlickFast(float product, vec3 f0) {
     return mix(f0, vec3(1.0), pow(1.0 - product, 5.0));
 }
 
@@ -69,7 +75,6 @@ float V_SmithGGXCorrelatedFast(float NoV, float NoL, float roughness) {
     return 0.5 / (GGXV + GGXL);
 }
 
-
 // Normal distribution functions - Specular D
 float D_GGX(in float roughness, in float NdH) {
     float m = roughness * roughness;
@@ -77,15 +82,6 @@ float D_GGX(in float roughness, in float NdH) {
     float d = (NdH * m2 - NdH) * NdH + 1.0;
     return m2 / (PI * d * d);
 }
-
-float D_GGX_Fast(float roughness, float NoH, const vec3 n, const vec3 h) {
-    vec3 NxH = cross(n, h);
-    float a = NoH * roughness;
-    float k = roughness / (dot(NxH, NxH) + a * a);
-    float d = k * k * (1.0 / PI);
-    return saturateMediump(d);
-}
-
 
 // Diffuse
 float Fd_Lambert() {
@@ -97,4 +93,9 @@ float Fd_Burley(float NoV, float NoL, float LoH, float roughness) {
     float lightScatter = F_Schlick(NoL, 1.0, f90);
     float viewScatter = F_Schlick(NoV, 1.0, f90);
     return lightScatter * viewScatter * (1.0 / PI);
+}
+
+// Kelemen visibility term
+float V_Kelemen(float LoH) {
+    return 0.25 / (LoH * LoH);
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useNormalTexture, useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -11,9 +11,15 @@ import { useControls } from 'leva';
 const materialKey = Math.random();
 
 export function CustomMaterial(props) {
-	const { color = '#ffffff', metalness = 0.5, roughness = 0.5, normalScale = 0 } = props;
-
-	const scene = useThree(({ scene }) => scene);
+	const {
+		color = '#ffffff',
+		metalness = 0.5,
+		reflectance = 0,
+		roughness = 0.5,
+		normalScale = 0,
+		clearCoat = 0,
+		clearCoatRoughness = 0,
+	} = props;
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
@@ -35,6 +41,9 @@ export function CustomMaterial(props) {
 
 				u_roughness: { value: roughness },
 				u_metalness: { value: metalness },
+				u_reflectance: { value: reflectance },
+				u_clearCoat: { value: clearCoat },
+				u_clearCoatRoughness: { value: clearCoatRoughness },
 
 				u_lightDirection: { value: new THREE.Vector3() },
 				u_lightPosition: { value: new THREE.Vector3() },
@@ -70,7 +79,7 @@ export function CustomMaterial(props) {
 		mat.defines.USE_ENV_MAP = true;
 
 		return mat;
-	}, [materialKey, metalness, roughness, normalScale]);
+	}, [materialKey]);
 
 	React.useEffect(() => {
 		material.uniforms.u_color.value.set(color);

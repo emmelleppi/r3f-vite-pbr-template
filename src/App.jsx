@@ -11,13 +11,21 @@ import { useControls } from 'leva';
 function Light() {
 	const [light, setLight] = React.useState();
 
+	const { spinningLight } = useControls({
+		spinningLight: false,
+	});
+
 	React.useEffect(() => useStore.setState((draft) => (draft.light = light)), [light]);
 
 	useFrame(({ clock }) => {
 		const time = clock.getElapsedTime();
-		light.position.x = 4 * Math.sin(time);
-		light.position.y = 4 * Math.cos(time);
-		light.position.z = 4 * Math.sin(time);
+		if (spinningLight) {
+			light.position.y = 4 * Math.cos(time);
+			light.position.x = 4 * Math.sin(time);
+			light.position.z = 4 * Math.sin(time);
+		} else {
+			light.position.set(10, 10, 10);
+		}
 	});
 
 	return (
@@ -49,11 +57,22 @@ function Light() {
 function Scene() {
 	const ref = React.useRef();
 
-	const { color, normalRepeatFactor, normalScale, metalness, roughness } = useControls({
+	const {
+		color,
+		normalRepeatFactor,
+		normalScale,
+		metalness,
+		roughness,
+		reflectance,
+		clearCoat,
+		clearCoatRoughness,
+	} = useControls({
 		color: '#e55656',
-
 		roughness: { value: 0, min: 0, max: 1, step: 0.01 },
 		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
+		reflectance: { value: 0, min: 0, max: 1, step: 0.01 },
+		clearCoat: { value: 0, min: 0, max: 1, step: 0.01 },
+		clearCoatRoughness: { value: 0, min: 0, max: 1, step: 0.01 },
 		normalScale: { value: 0.65, min: 0, max: 1, step: 0.01 },
 		normalRepeatFactor: { value: 3, min: 0, max: 4, step: 0.01 },
 	});
@@ -63,6 +82,9 @@ function Scene() {
 		ref.current.material.uniforms.u_roughness.value = roughness;
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
 		ref.current.material.uniforms.u_normalRepeatFactor.value = normalRepeatFactor;
+		ref.current.material.uniforms.u_reflectance.value = reflectance;
+		ref.current.material.uniforms.u_clearCoat.value = clearCoat;
+		ref.current.material.uniforms.u_clearCoatRoughness.value = clearCoatRoughness;
 	});
 
 	return (
