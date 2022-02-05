@@ -12,7 +12,7 @@ function Light() {
 	const [light, setLight] = React.useState();
 
 	const { spinningLight } = useControls({
-		spinningLight: false,
+		spinningLight: true,
 	});
 
 	React.useEffect(() => useStore.setState((draft) => (draft.light = light)), [light]);
