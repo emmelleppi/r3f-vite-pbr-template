@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, useNormalTexture, useTexture } from '@react-three/drei';
 import { useControls } from 'leva';
 
 function Light() {
@@ -57,6 +57,12 @@ function Light() {
 function Scene() {
 	const ref = React.useRef();
 
+	const { normalMap } = useControls({
+		normalMap: { value: 72, min: 0, max: 74, step: 1 },
+	});
+	const [normalTexture] = useNormalTexture(normalMap);
+	const envTexture = useTexture('/assets/textures/env.jpg');
+
 	const {
 		color,
 		sheenColor,
@@ -68,6 +74,7 @@ function Scene() {
 		clearCoat,
 		clearCoatRoughness,
 		sheen,
+		compareWithThreejs,
 	} = useControls({
 		color: '#003e8d',
 		sheenColor: '#8000ff',
@@ -78,8 +85,22 @@ function Scene() {
 		clearCoatRoughness: { value: 0.2, min: 0, max: 1, step: 0.01 },
 		sheen: { value: 0.8, min: 0, max: 1, step: 0.01 },
 		normalScale: { value: 0.8, min: 0, max: 1, step: 0.01 },
-		normalRepeatFactor: { value: 3, min: 0, max: 4, step: 0.01 },
+		normalRepeatFactor: { value: 1, min: 0, max: 4, step: 0.01 },
+		compareWithThreejs: false,
 	});
+
+	React.useEffect(() => {
+		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
+		ref.current.material.uniforms.u_normalTexture.value = normalTexture;
+	}, [normalTexture]);
+	React.useEffect(() => {
+		envTexture.mapping = THREE.EquirectangularReflectionMapping;
+		ref.current.material.uniforms.u_envTexture.value = envTexture;
+		ref.current.material.uniforms.u_envTextureSize.value.set(
+			envTexture.image.width,
+			envTexture.image.height,
+		);
+	}, [envTexture]);
 
 	useFrame(() => {
 		ref.current.material.uniforms.u_color.value.set(color);
@@ -96,14 +117,27 @@ function Scene() {
 
 	return (
 		<>
-			<mesh ref={ref} castShadow receiveShadow>
+			<mesh ref={ref} castShadow receiveShadow position-x={compareWithThreejs ? -2 : 0}>
 				<torusKnotBufferGeometry args={[1, 0.45, 128, 32]} />
 				<CustomMaterial />
 			</mesh>
-			<mesh receiveShadow position={[0, 0, -5]}>
-				<planeBufferGeometry args={[20, 20]} />
-				<CustomMaterial color="white" />
-			</mesh>
+			{compareWithThreejs && (
+				<mesh castShadow receiveShadow position-x={2}>
+					<torusKnotBufferGeometry args={[1, 0.45, 128, 32]} />
+					<meshPhysicalMaterial
+						color={color}
+						metalness={metalness}
+						roughness={roughness}
+						clearcoat={clearCoat}
+						clearcoatRoughness={clearCoatRoughness}
+						sheen={sheen}
+						sheenColor={sheenColor}
+						reflectivity={reflectance}
+						normalMap={normalTexture}
+						envMap={envTexture}
+					/>
+				</mesh>
+			)}
 			<Light />
 			<SceneManager />
 		</>

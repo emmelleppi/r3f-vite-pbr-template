@@ -1,12 +1,11 @@
 import React from 'react';
 import { useFrame } from '@react-three/fiber';
-import { useNormalTexture, useTexture } from '@react-three/drei';
+import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
 import frag from './custom.frag';
 import vert from './custom.vert';
 import { useStore } from '@/store';
-import { useControls } from 'leva';
 
 const materialKey = Math.random();
 
@@ -23,13 +22,6 @@ export function CustomMaterial(props) {
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
-	const envTexture = useTexture('/assets/textures/env.jpg');
-
-	const { normalMap } = useControls({
-		normalMap: { value: 72, min: 0, max: 74, step: 1 },
-	});
-
-	const [normalTexture] = useNormalTexture(normalMap);
 
 	const material = React.useMemo(() => {
 		const uniforms = THREE.UniformsUtils.merge([
@@ -97,22 +89,8 @@ export function CustomMaterial(props) {
 	}, [material, bluenoiseTexture]);
 
 	React.useEffect(() => {
-		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
-		material.uniforms.u_normalTexture.value = normalTexture;
-	}, [material, normalTexture]);
-
-	React.useEffect(() => {
 		material.uniforms.u_iblTexture.value = iblTexture;
 	}, [material, iblTexture]);
-
-	React.useEffect(() => {
-		envTexture.mapping = THREE.EquirectangularReflectionMapping;
-		material.uniforms.u_envTexture.value = envTexture;
-		material.uniforms.u_envTextureSize.value.set(
-			envTexture.image.width,
-			envTexture.image.height,
-		);
-	}, [material, envTexture]);
 
 	useFrame((_, dt) => {
 		material.uniforms.u_deltaTime.value = dt;
