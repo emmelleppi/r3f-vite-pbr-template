@@ -61,9 +61,10 @@ void main() {
 
     vec3 N = normalize(v_worldNormal) * faceDirection;
     vec3 L = normalize(u_lightPosition - v_worldPosition);
+    vec3 L_Inv = normalize(v_worldPosition - u_lightPosition);
     vec3 V = normalize(cameraPosition - v_worldPosition);
     vec3 H = normalize(L + V);
-
+    
     #ifdef USE_NORMAL_MAP
         vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
         N = normalize( v_normal ) * faceDirection;
@@ -76,9 +77,10 @@ void main() {
 
     float NdV = abs(dot(N, V)) + 1e-5;
     float NdL = saturate(dot(N, L));
+    float NdL_Inv = saturate(dot(N, L_Inv));
     float NdH = saturate(dot(N, H));
     float LdH = saturate(dot(L, H));
-
+    
     vec3 color = u_color;
     vec3 baseTexture = vec3(1.0);
     vec3 base = color * baseTexture;
@@ -99,10 +101,9 @@ void main() {
     vec3 F = F_Schlick(LdH, f0, f90);
     float G = V_SmithGGXCorrelatedFast(NdV, NdL, perceptiveRoughness);
     
-    float  Dc = D_GGX(clearCoatRoughness, NdH, H);
-    float Gc = SmithG_GGX(NdL, 0.25) * SmithG_GGX(NdV, 0.25);
-    // float  Gc = V_Kelemen(LdH);
-    float  Fc = F_Schlick(LdH, 0.04) * clearCoat;
+    float Dc = D_GGX(clearCoatRoughness, saturate(dot(v_worldNormal, H)), H);
+    float Gc = SmithG_GGX(saturate(dot(v_worldNormal, L)), 0.25) * SmithG_GGX(saturate(dot(v_worldNormal, V)), 0.25);
+    float Fc = F_Schlick(LdH, 0.5) * clearCoat;
     float Frc = (Dc * Gc) * Fc;
 
     // Specular
@@ -116,19 +117,21 @@ void main() {
 
     vec3 refl = reflect(-V, N);
     vec2 reflUv = mod(equirectUv(refl), 1.0);
-    // float lod = mipMapLevel(reflUv * u_envTextureSize);
     vec3 indirectSpecular = texture2D(u_envTexture, reflUv, perceptiveRoughness * 11.0).xyz;
 
+    refl = reflect(-V, normalize(v_worldNormal) * faceDirection);
+    reflUv = mod(equirectUv(refl), 1.0);
     vec3 envSpecularClearcoat = texture2D(u_envTexture, reflUv, clearCoatPerceptualRoughness * 11.0).xyz;
     indirectDiffuse  *= 1.0 - Fc;
     indirectSpecular += envSpecularClearcoat * Fc;
 
-    vec3 sheenSpecular = u_sheen * irradiance * vec3(IBLSheenBRDF(NdV, max(0.5, roughness)) + BRDF_Sheen(NdL, NdV, NdH, u_sheenColor, max(0.5, roughness)));
+    vec3 sheenSpecular = u_sheen * u_sheenColor * (irradiance * IBLSheenBRDF(NdV, roughness) + 2.0 * NdL * BRDF_Sheen(NdL_Inv, NdV, NdH, roughness));
     
     indirectDiffuse *= diffuseColor;
     indirectSpecular *= specularColor;
+    indirectSpecular = indirectSpecular * ( 1.0 - 0.157 * u_sheen ) + sheenSpecular;
 
-    vec3 ibl = indirectDiffuse + indirectSpecular * ( 1.0 - 0.157 * u_sheen ) + sheenSpecular;
+    vec3 ibl = indirectDiffuse + indirectSpecular;
      
     vec3 energyCompensation = 1.0 + f0 * (1.0 / dfg.x - 1.0);
     Fr *= energyCompensation;
@@ -138,7 +141,7 @@ void main() {
     #include <customShadows>
     gl_FragColor.rgb += ibl;
     gl_FragColor.a = 1.0;
-    
+
     #include <tonemapping_fragment>
 	#include <encodings_fragment>
 }

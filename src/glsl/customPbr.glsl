@@ -128,10 +128,10 @@ float V_Neubelt( float dotNV, float dotNL ) {
 	return saturate( 1.0 / ( 4.0 * ( dotNL + dotNV - dotNL * dotNV ) ) );
 }
 
-vec3 BRDF_Sheen(float dotNL, float dotNV, float dotNH, vec3 sheenColor, const in float sheenRoughness ) {
+vec3 BRDF_Sheen(float dotNL, float dotNV, float dotNH, const in float sheenRoughness ) {
 	float D = D_Charlie( sheenRoughness, dotNH );
 	float V = V_Neubelt( dotNV, dotNL );
-	return sheenColor * ( D * V );
+	return vec3( D * V );
 }
 
 float SmithG_GGX(float NdV, float alphaG) {
