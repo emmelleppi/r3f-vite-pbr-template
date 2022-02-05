@@ -116,10 +116,10 @@ void main() {
 
     vec3 refl = reflect(-V, N);
     vec2 reflUv = mod(equirectUv(refl), 1.0);
-    float lod = mipMapLevel(reflUv * u_envTextureSize);
-    vec3 indirectSpecular = texture2D(u_envTexture, reflUv, max(perceptiveRoughness * 11.0, lod)).xyz;
+    // float lod = mipMapLevel(reflUv * u_envTextureSize);
+    vec3 indirectSpecular = texture2D(u_envTexture, reflUv, perceptiveRoughness * 11.0).xyz;
 
-    vec3 envSpecularClearcoat = texture2D(u_envTexture, reflUv, max(clearCoatPerceptualRoughness * 11.0, lod)).xyz;
+    vec3 envSpecularClearcoat = texture2D(u_envTexture, reflUv, clearCoatPerceptualRoughness * 11.0).xyz;
     indirectDiffuse  *= 1.0 - Fc;
     indirectSpecular += envSpecularClearcoat * Fc;
 

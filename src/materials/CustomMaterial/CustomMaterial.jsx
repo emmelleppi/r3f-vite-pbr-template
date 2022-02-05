@@ -26,7 +26,7 @@ export function CustomMaterial(props) {
 	const envTexture = useTexture('/assets/textures/env.jpg');
 
 	const { normalMap } = useControls({
-		normalMap: { value: 61, min: 0, max: 74, step: 1 },
+		normalMap: { value: 72, min: 0, max: 74, step: 1 },
 	});
 
 	const [normalTexture] = useNormalTexture(normalMap);
@@ -106,7 +106,6 @@ export function CustomMaterial(props) {
 	}, [material, iblTexture]);
 
 	React.useEffect(() => {
-		envTexture.wrapS = envTexture.wrapT = THREE.RepeatWrapping;
 		envTexture.mapping = THREE.EquirectangularReflectionMapping;
 		material.uniforms.u_envTexture.value = envTexture;
 		material.uniforms.u_envTextureSize.value.set(
