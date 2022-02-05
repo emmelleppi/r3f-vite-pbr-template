@@ -138,8 +138,8 @@ void main() {
 
     gl_FragColor.rgb = (Fd + Fr * (1.0 - Fc)) * (1.0 - Fc) + Frc;
     gl_FragColor.rgb *= (intensity * NdL);
-    gl_FragColor.rgb += 0.5 * clearCoat * F_Schlick(dot(v_worldNormal, V));
     #include <customShadows>
+    gl_FragColor.rgb += 0.5 * clearCoat * F_Schlick(dot(v_worldNormal, V));
     gl_FragColor.rgb += ibl;
     gl_FragColor.a = 1.0;
 
