@@ -59,6 +59,7 @@ function Scene() {
 
 	const {
 		color,
+		sheenColor,
 		normalRepeatFactor,
 		normalScale,
 		metalness,
@@ -66,18 +67,23 @@ function Scene() {
 		reflectance,
 		clearCoat,
 		clearCoatRoughness,
+		sheen,
 	} = useControls({
-		color: '#e55656',
-		roughness: { value: 0, min: 0, max: 1, step: 0.01 },
+		color: '#003e8d',
+		sheenColor: '#8000ff',
+		roughness: { value: 0.85, min: 0, max: 1, step: 0.01 },
 		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
-		reflectance: { value: 0, min: 0, max: 1, step: 0.01 },
-		clearCoat: { value: 0, min: 0, max: 1, step: 0.01 },
-		clearCoatRoughness: { value: 0, min: 0, max: 1, step: 0.01 },
-		normalScale: { value: 0.65, min: 0, max: 1, step: 0.01 },
+		reflectance: { value: 0.4, min: 0, max: 1, step: 0.01 },
+		clearCoat: { value: 0.5, min: 0, max: 1, step: 0.01 },
+		clearCoatRoughness: { value: 0.2, min: 0, max: 1, step: 0.01 },
+		sheen: { value: 0.8, min: 0, max: 1, step: 0.01 },
+		normalScale: { value: 0.8, min: 0, max: 1, step: 0.01 },
 		normalRepeatFactor: { value: 3, min: 0, max: 4, step: 0.01 },
 	});
 
 	useFrame(() => {
+		ref.current.material.uniforms.u_color.value.set(color);
+		ref.current.material.uniforms.u_sheenColor.value.set(sheenColor);
 		ref.current.material.uniforms.u_metalness.value = metalness;
 		ref.current.material.uniforms.u_roughness.value = roughness;
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
@@ -85,13 +91,14 @@ function Scene() {
 		ref.current.material.uniforms.u_reflectance.value = reflectance;
 		ref.current.material.uniforms.u_clearCoat.value = clearCoat;
 		ref.current.material.uniforms.u_clearCoatRoughness.value = clearCoatRoughness;
+		ref.current.material.uniforms.u_sheen.value = sheen;
 	});
 
 	return (
 		<>
 			<mesh ref={ref} castShadow receiveShadow>
 				<torusKnotBufferGeometry args={[1, 0.45, 128, 32]} />
-				<CustomMaterial color={color} />
+				<CustomMaterial />
 			</mesh>
 			<mesh receiveShadow position={[0, 0, -5]}>
 				<planeBufferGeometry args={[20, 20]} />

@@ -26,7 +26,7 @@ export function CustomMaterial(props) {
 	const envTexture = useTexture('/assets/textures/env.jpg');
 
 	const { normalMap } = useControls({
-		normalMap: { value: 73, min: 0, max: 74, step: 1 },
+		normalMap: { value: 61, min: 0, max: 74, step: 1 },
 	});
 
 	const [normalTexture] = useNormalTexture(normalMap);
@@ -38,12 +38,14 @@ export function CustomMaterial(props) {
 				u_time: { value: 0 },
 
 				u_color: { value: new THREE.Color() },
+				u_sheenColor: { value: new THREE.Color() },
 
 				u_roughness: { value: roughness },
 				u_metalness: { value: metalness },
 				u_reflectance: { value: reflectance },
 				u_clearCoat: { value: clearCoat },
 				u_clearCoatRoughness: { value: clearCoatRoughness },
+				u_sheen: { value: 0 },
 
 				u_lightDirection: { value: new THREE.Vector3() },
 				u_lightPosition: { value: new THREE.Vector3() },
