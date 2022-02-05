@@ -103,7 +103,7 @@ void main() {
     
     float Dc = D_GGX(clearCoatRoughness, saturate(dot(v_worldNormal, H)), H);
     float Gc = SmithG_GGX(saturate(dot(v_worldNormal, L)), 0.25) * SmithG_GGX(saturate(dot(v_worldNormal, V)), 0.25);
-    float Fc = F_Schlick(LdH, 0.5) * clearCoat;
+    float Fc = (F_Schlick(LdH, 0.5)) * clearCoat;
     float Frc = (Dc * Gc) * Fc;
 
     // Specular
@@ -138,6 +138,7 @@ void main() {
 
     gl_FragColor.rgb = (Fd + Fr * (1.0 - Fc)) * (1.0 - Fc) + Frc;
     gl_FragColor.rgb *= (intensity * NdL);
+    gl_FragColor.rgb += 0.5 * clearCoat * F_Schlick(dot(v_worldNormal, V));
     #include <customShadows>
     gl_FragColor.rgb += ibl;
     gl_FragColor.a = 1.0;
