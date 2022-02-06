@@ -109,7 +109,7 @@ float IBLSheenBRDF( float NdV, const in float roughness) {
 	float a = roughness < 0.25 ? -339.2 * r2 + 161.4 * roughness - 25.9 : -8.48 * r2 + 14.3 * roughness - 9.95;
 	float b = roughness < 0.25 ? 44.0 * r2 - 23.7 * roughness + 3.26 : 1.97 * r2 - 3.27 * roughness + 0.72;
 	float DG = exp( a * NdV + b ) + ( roughness < 0.25 ? 0.0 : 0.1 * ( roughness - 0.25 ) );
-	return saturate( DG * RECIPROCAL_PI );
+	return saturate( 0.1 + DG * RECIPROCAL_PI );
 }
 
 float D_Charlie( float roughness, float dotNH ) {

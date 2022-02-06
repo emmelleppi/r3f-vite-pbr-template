@@ -56,13 +56,6 @@ function Light() {
 
 function Scene() {
 	const ref = React.useRef();
-
-	const { normalMap } = useControls({
-		normalMap: { value: 72, min: 0, max: 74, step: 1 },
-	});
-	const [normalTexture] = useNormalTexture(normalMap);
-	const envTexture = useTexture('/assets/textures/env.jpg');
-
 	const {
 		color,
 		sheenColor,
@@ -74,6 +67,7 @@ function Scene() {
 		clearCoat,
 		clearCoatRoughness,
 		sheen,
+		normalMap,
 		compareWithThreejs,
 	} = useControls({
 		color: '#003e8d',
@@ -86,8 +80,12 @@ function Scene() {
 		sheen: { value: 0.8, min: 0, max: 1, step: 0.01 },
 		normalScale: { value: 0.8, min: 0, max: 1, step: 0.01 },
 		normalRepeatFactor: { value: 1, min: 0, max: 4, step: 0.01 },
+		normalMap: { value: 72, min: 0, max: 74, step: 1 },
 		compareWithThreejs: false,
 	});
+
+	const [normalTexture] = useNormalTexture(normalMap);
+	const envTexture = useTexture('/assets/textures/env.jpg');
 
 	React.useEffect(() => {
 		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
@@ -134,6 +132,7 @@ function Scene() {
 						sheenColor={sheenColor}
 						reflectivity={reflectance}
 						normalMap={normalTexture}
+						normalScale={normalScale}
 						envMap={envTexture}
 					/>
 				</mesh>
