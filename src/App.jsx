@@ -168,7 +168,7 @@ export function App() {
 				</React.Suspense>
 				<OrbitControls />
 			</Canvas>
-			<Leva hideCopyButton theme={{ sizes: { rootWidth: '22rem' } }} />
+			<Leva hideCopyButton theme={{ sizes: { rootWidth: '20rem' } }} />
 		</div>
 	);
 }
