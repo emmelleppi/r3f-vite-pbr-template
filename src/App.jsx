@@ -6,7 +6,7 @@ import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
 import { OrbitControls, useNormalTexture, useTexture } from '@react-three/drei';
-import { useControls } from 'leva';
+import { Leva, useControls } from 'leva';
 
 function Light() {
 	const [light, setLight] = React.useState();
@@ -168,6 +168,7 @@ export function App() {
 				</React.Suspense>
 				<OrbitControls />
 			</Canvas>
+			<Leva hideCopyButton theme={{ sizes: { rootWidth: '22rem' } }} />
 		</div>
 	);
 }
