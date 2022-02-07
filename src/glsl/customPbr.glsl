@@ -1,6 +1,3 @@
-#define MEDIUMP_FLT_MAX    65504.0
-#define saturateMediump(x) min(x, MEDIUMP_FLT_MAX)
-
 vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 mapN, float faceDirection, float normalScale ) {
     // Workaround for Adreno 3XX dFd*( vec3 ) bug. See #9988
     vec3 q0 = vec3( dFdx( eye_pos.x ), dFdx( eye_pos.y ), dFdx( eye_pos.z ) );
@@ -18,54 +15,50 @@ vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 mapN, float faceDirec
     return normalize( T * ( mapN.x * scale ) + B * ( mapN.y * scale ) + N * mapN.z );
 }
 
-float mipMapLevel(in vec2 texture_coordinate) {
-    vec2  dx_vtc        = dFdx(texture_coordinate);
-    vec2  dy_vtc        = dFdy(texture_coordinate);
-    float delta_max_sqr = max(dot(dx_vtc, dx_vtc), dot(dy_vtc, dy_vtc));
-    float mml = 0.5 * log2(delta_max_sqr);
-    return max( 0.0, mml ); 
-}
+// float normalFiltering(float roughness, const vec3 worldNormal) {
+//     // Kaplanyan 2016, "Stable specular highlights"
+//     // Tokuyoshi 2017, "Error Reduction and Simplification for Shading Anti-Aliasing"
+//     // Tokuyoshi and Kaplanyan 2019, "Improved Geometric Specular Antialiasing"
 
-float normalFiltering(float roughness, const vec3 worldNormal) {
-    // Kaplanyan 2016, "Stable specular highlights"
-    // Tokuyoshi 2017, "Error Reduction and Simplification for Shading Anti-Aliasing"
-    // Tokuyoshi and Kaplanyan 2019, "Improved Geometric Specular Antialiasing"
+//     // This implementation is meant for deferred rendering in the original paper but
+//     // we use it in forward rendering as well (as discussed in Tokuyoshi and Kaplanyan
+//     // 2019). The main reason is that the forward version requires an expensive transform
+//     // of the half vector by the tangent frame for every light. This is therefore an
+//     // approximation but it works well enough for our needs and provides an improvement
+//     // over our original implementation based on Vlachos 2015, "Advanced VR Rendering".
 
-    // This implementation is meant for deferred rendering in the original paper but
-    // we use it in forward rendering as well (as discussed in Tokuyoshi and Kaplanyan
-    // 2019). The main reason is that the forward version requires an expensive transform
-    // of the half vector by the tangent frame for every light. This is therefore an
-    // approximation but it works well enough for our needs and provides an improvement
-    // over our original implementation based on Vlachos 2015, "Advanced VR Rendering".
+//     vec3 du = dFdx(worldNormal);
+//     vec3 dv = dFdy(worldNormal);
+// 	float _specularAntiAliasingVariance = 2.0;
+// 	float _specularAntiAliasingThreshold = 0.01;
+//     float variance = _specularAntiAliasingVariance * (dot(du, du) + dot(dv, dv));
 
-    vec3 du = dFdx(worldNormal);
-    vec3 dv = dFdy(worldNormal);
-	float _specularAntiAliasingVariance = 2.0;
-	float _specularAntiAliasingThreshold = 0.01;
-    float variance = _specularAntiAliasingVariance * (dot(du, du) + dot(dv, dv));
+//     float kernelRoughness = min(2.0 * variance, _specularAntiAliasingThreshold);
+//     float squareRoughness = clamp(roughness * roughness + kernelRoughness, 0.0, 1.0);
 
-    float kernelRoughness = min(2.0 * variance, _specularAntiAliasingThreshold);
-    float squareRoughness = clamp(roughness * roughness + kernelRoughness, 0.0, 1.0);
-
-    return sqrt(squareRoughness);
-}
+//     return sqrt(squareRoughness);
+// }
 
 
 // Fresnel - Specular F
 // Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
 float F_Schlick(float product, float f0, float f90) {
-    return f0 + (f90 - f0) * pow(1.0 - product, 5.0);
+    float fresnel = exp2( ( - 5.55473 * product - 6.98316 ) * product );
+    return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 vec3 F_Schlick(float product, vec3 f0, vec3 f90) {
-    return f0 + (f90 - f0) * pow(1.0 - product, 5.0);
+    float fresnel = exp2( ( - 5.55473 * product - 6.98316 ) * product );
+    return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 float F_Schlick(float product, float f0) {
-    float f = pow(1.0 - product, 5.0);
-    return f + f0 * (1.0 - f);
+    float f90 = 1.0;
+    float fresnel = exp2( ( - 5.55473 * product - 6.98316 ) * product );
+    return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 vec3 F_Schlick(float product, vec3 f0) {
-    float f = pow(1.0 - product, 5.0);
-    return f + f0 * (1.0 - f);
+    vec3 f90 = vec3(1.0);
+    float fresnel = exp2( ( - 5.55473 * product - 6.98316 ) * product );
+    return f0 * ( 1.0 - fresnel ) + ( f90 * fresnel );
 }
 float F_Schlick(float product) {
     float m = clamp(1. - product, 0., 1.);
@@ -82,6 +75,11 @@ float V_SmithGGXCorrelatedFast(float NoV, float NoL, float roughness) {
 }
 
 // Normal distribution functions - Specular D
+// float D_GGX( const in float alpha, const in float dotNH ) {
+// 	float a2 = pow2( alpha );
+// 	float denom = pow2( dotNH ) * ( a2 - 1.0 ) + 1.0;
+// 	return RECIPROCAL_PI * a2 / pow2( denom );
+// }
 float D_GGX(float linearRoughness, float NoH, const vec3 h) {
     // Walter et al. 2007, "Microfacet Models for Refraction through Rough Surfaces"
     float oneMinusNoHSquared = 1.0 - NoH * NoH;
@@ -109,17 +107,25 @@ float IBLSheenBRDF( float NdV, const in float roughness) {
 	float a = roughness < 0.25 ? -339.2 * r2 + 161.4 * roughness - 25.9 : -8.48 * r2 + 14.3 * roughness - 9.95;
 	float b = roughness < 0.25 ? 44.0 * r2 - 23.7 * roughness + 3.26 : 1.97 * r2 - 3.27 * roughness + 0.72;
 	float DG = exp( a * NdV + b ) + ( roughness < 0.25 ? 0.0 : 0.1 * ( roughness - 0.25 ) );
-	return saturate( 0.1 + DG * RECIPROCAL_PI );
+	return saturate( DG * RECIPROCAL_PI );
 }
 
-float D_Charlie( float roughness, float dotNH ) {
-    // https://github.com/google/filament/blob/master/shaders/src/brdf.fs
-	float alpha = pow2( roughness );
-	// Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
-	float invAlpha = 1.0 / alpha;
-	float cos2h = dotNH * dotNH;
-	float sin2h = max( 1.0 - cos2h, 0.0078125 ); // 2^(-14/2), so sin2h^2 > 0 in fp16
-	return ( 2.0 + invAlpha ) * pow( sin2h, invAlpha * 0.5 ) / ( 2.0 * PI );
+// float D_Charlie(float roughness, float NoH) {
+//     // Estevez and Kulla 2017, "Production Friendly Microfacet Sheen BRDF"
+//     float invAlpha  = 1.0 / roughness;
+//     float cos2h = NoH * NoH;
+//     float sin2h = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
+//     return (2.0 + invAlpha) * pow(sin2h, invAlpha * 0.5) / (2.0 * PI);
+// }
+
+float D_Ashikhmin(float roughness, float NoH) {
+    // Ashikhmin 2007, "Distribution-based BRDFs"
+	float a2 = roughness * roughness;
+	float cos2h = NoH * NoH;
+	float sin2h = max(1.0 - cos2h, 0.0078125); // 2^(-14/2), so sin2h^2 > 0 in fp16
+	float sin4h = sin2h * sin2h;
+	float cot2 = -cos2h / (a2 * sin2h);
+	return 1.0 / (PI * (4.0 * a2 + 1.0) * sin4h) * (4.0 * exp(cot2) + sin4h);
 }
 
 float V_Neubelt( float dotNV, float dotNL ) {
@@ -128,23 +134,11 @@ float V_Neubelt( float dotNV, float dotNL ) {
 	return saturate( 1.0 / ( 4.0 * ( dotNL + dotNV - dotNL * dotNV ) ) );
 }
 
-vec3 BRDF_Sheen(float dotNL, float dotNV, float dotNH, const in float sheenRoughness ) {
-	float D = D_Charlie( sheenRoughness, dotNH );
-	float V = V_Neubelt( dotNV, dotNL );
-	return vec3( D * V );
-}
-
 float SmithG_GGX(float NdV, float alphaG) {
     float a = alphaG * alphaG;
     float b = NdV*NdV;
     return 1. / (abs(NdV) + max(sqrt(a + b - a*b), EPSILON));
 }
-
-// Kelemen visibility term
-float V_Kelemen(float LoH) {
-    return 0.25 / (LoH * LoH);
-}
-
 
 vec3 Irradiance_SphericalHarmonics(const vec3 n) {
     // Irradiance from "Ditch River" IBL (http://www.hdrlabs.com/sibl/archive.html)

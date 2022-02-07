@@ -38,6 +38,7 @@ export function CustomMaterial(props) {
 				u_clearCoat: { value: clearCoat },
 				u_clearCoatRoughness: { value: clearCoatRoughness },
 				u_sheen: { value: 0 },
+				u_sheenRoughness: { value: 0 },
 
 				u_lightDirection: { value: new THREE.Vector3() },
 				u_lightPosition: { value: new THREE.Vector3() },

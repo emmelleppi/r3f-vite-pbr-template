@@ -1,5 +1,5 @@
 import React from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import SceneManager from './SceneManager';
@@ -69,18 +69,20 @@ function Scene() {
 		sheen,
 		normalMap,
 		compareWithThreejs,
+		sheenRoughness,
 	} = useControls({
-		color: '#003e8d',
-		sheenColor: '#8000ff',
-		roughness: { value: 0.85, min: 0, max: 1, step: 0.01 },
-		metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
-		reflectance: { value: 0.4, min: 0, max: 1, step: 0.01 },
-		clearCoat: { value: 0.5, min: 0, max: 1, step: 0.01 },
+		color: '#d13d3d',
+		sheenColor: '#33ff00',
+		roughness: { value: 0.7, min: 0, max: 1, step: 0.01 },
+		metalness: { value: 0.15, min: 0, max: 1, step: 0.01 },
+		reflectance: { value: 0.8, min: 0, max: 1, step: 0.01 },
+		clearCoat: { value: 1, min: 0, max: 1, step: 0.01 },
 		clearCoatRoughness: { value: 0.2, min: 0, max: 1, step: 0.01 },
-		sheen: { value: 0.8, min: 0, max: 1, step: 0.01 },
+		sheen: { value: 0.6, min: 0, max: 1, step: 0.01 },
+		sheenRoughness: { value: 0.6, min: 0, max: 1, step: 0.01 },
 		normalScale: { value: 0.8, min: 0, max: 1, step: 0.01 },
 		normalRepeatFactor: { value: 1, min: 0, max: 4, step: 0.01 },
-		normalMap: { value: 72, min: 0, max: 74, step: 1 },
+		normalMap: { value: 49, min: 0, max: 74, step: 1 },
 		compareWithThreejs: false,
 	});
 
@@ -100,7 +102,7 @@ function Scene() {
 		);
 	}, [envTexture]);
 
-	useFrame(() => {
+	useFrame(({ gl }) => {
 		ref.current.material.uniforms.u_color.value.set(color);
 		ref.current.material.uniforms.u_sheenColor.value.set(sheenColor);
 		ref.current.material.uniforms.u_metalness.value = metalness;
@@ -111,6 +113,7 @@ function Scene() {
 		ref.current.material.uniforms.u_clearCoat.value = clearCoat;
 		ref.current.material.uniforms.u_clearCoatRoughness.value = clearCoatRoughness;
 		ref.current.material.uniforms.u_sheen.value = sheen;
+		ref.current.material.uniforms.u_sheenRoughness.value = sheenRoughness;
 	});
 
 	return (
@@ -129,6 +132,7 @@ function Scene() {
 						clearcoat={clearCoat}
 						clearcoatRoughness={clearCoatRoughness}
 						sheen={sheen}
+						sheenRoughness={sheenRoughness}
 						sheenColor={sheenColor}
 						reflectivity={reflectance}
 						normalMap={normalTexture}
