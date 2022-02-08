@@ -22,6 +22,7 @@ export function CustomMaterial(props) {
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
+	const canvasGeneratedNoise = useStore(({ canvasGeneratedNoise }) => canvasGeneratedNoise);
 
 	const material = React.useMemo(() => {
 		const uniforms = THREE.UniformsUtils.merge([
@@ -30,20 +31,27 @@ export function CustomMaterial(props) {
 				u_time: { value: 0 },
 
 				u_color: { value: new THREE.Color() },
-				u_sheenColor: { value: new THREE.Color() },
-
-				u_roughness: { value: roughness },
-				u_isSuperRough: { value: false },
-				u_metalness: { value: metalness },
 				u_reflectance: { value: reflectance },
+
+				u_isSuperRough: { value: false },
+				u_roughness: { value: roughness },
+				u_metalness: { value: metalness },
+
 				u_clearCoat: { value: clearCoat },
 				u_clearCoatRoughness: { value: clearCoatRoughness },
+
 				u_sheen: { value: 0 },
 				u_sheenRoughness: { value: 0 },
+				u_sheenColor: { value: new THREE.Color() },
 
+				u_ambientLight: { value: new THREE.Vector3(0, 0, 0) },
 				u_lightDirection: { value: new THREE.Vector3() },
 				u_lightPosition: { value: new THREE.Vector3() },
-				u_ambientLight: { value: new THREE.Vector3(0, 0, 0) },
+
+				u_glitter: { value: 0 },
+				u_glitterDensity: { value: 1 },
+				u_glitterColor: { value: new THREE.Color() },
+				u_glitterNoiseTexture: { value: null },
 
 				u_normalTexture: { value: null },
 				u_normalScale: { value: normalScale },
@@ -53,6 +61,7 @@ export function CustomMaterial(props) {
 				u_blueNoiseTexelSize: { value: new THREE.Vector2() },
 
 				u_iblTexture: { value: null },
+
 				u_envTexture: { value: null },
 				u_envTextureSize: { value: new THREE.Vector2() },
 			},
@@ -93,6 +102,10 @@ export function CustomMaterial(props) {
 	React.useEffect(() => {
 		material.uniforms.u_iblTexture.value = iblTexture;
 	}, [material, iblTexture]);
+
+	React.useEffect(() => {
+		material.uniforms.u_glitterNoiseTexture.value = canvasGeneratedNoise;
+	}, [material, canvasGeneratedNoise]);
 
 	useFrame((_, dt) => {
 		material.uniforms.u_deltaTime.value = dt;

@@ -1,30 +1,36 @@
-uniform bool u_isSuperRough;
-
 uniform float u_time;
-uniform float u_metalness;
-uniform float u_roughness;
-uniform float u_clearCoat;
-uniform float u_sheen;
-uniform float u_clearCoatRoughness;
+uniform vec3 u_color;
+uniform vec3 u_lightPosition;
+uniform vec3 u_ambientLight;
+
 uniform float u_reflectance;
-uniform float u_normalScale;
+uniform bool u_isSuperRough;
+uniform float u_roughness;
+uniform sampler2D u_roughnessTexture;
+uniform float u_metalness;
+uniform sampler2D u_metalnessTexture;
+
+uniform float u_clearCoat;
+uniform float u_clearCoatRoughness;
+
+uniform float u_sheen;
+uniform vec3 u_sheenColor;
 uniform float u_sheenRoughness;
+
+uniform float u_glitter;
+uniform float u_glitterDensity;
+uniform vec3 u_glitterColor;
+uniform sampler2D u_glitterNoiseTexture;
 
 uniform vec2 u_envTextureSize;
 uniform vec2 u_normalRepeatFactor;
 
-uniform vec3 u_color;
-uniform vec3 u_sheenColor;
-uniform vec3 u_lightPosition;
-uniform vec3 u_ambientLight;
-
+uniform mat3 normalMatrix;
+uniform float u_normalScale;
 uniform sampler2D u_normalTexture;
-uniform sampler2D u_roughnessTexture;
-uniform sampler2D u_metalnessTexture;
+
 uniform sampler2D u_iblTexture;
 uniform sampler2D u_envTexture;
-
-uniform mat3 normalMatrix;
 
 varying vec2 v_uv;
 varying vec3 v_viewPosition;
@@ -77,10 +83,11 @@ void main() {
     
     // calculate world normal with normalMap
     #ifdef USE_NORMAL_MAP
+        vec3 noise = texture2D(u_glitterNoiseTexture, u_glitterDensity * v_uv).rgb * 2.0 - 1.0;
         vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
         N = normalize( v_normal ) * faceDirection;
         N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
-        N = inverseTransformDirection(normalMatrix * N, viewMatrix);
+        N = inverseTransformDirection(normalMatrix * (N  + 0.5 * u_glitter * noise), viewMatrix);
     #endif
 
     // roughness adjustment
@@ -110,6 +117,8 @@ void main() {
     float WNdH = saturate(dot(v_worldNormal, H));
     float WNdL = saturate(dot(v_worldNormal, L));
     
+    vec3 glitter = u_glitterColor * u_glitter * max(0.0,  dot(H, noise) - 0.5);
+
     // irradiance and radiance
     vec3 irradiance = Irradiance_SphericalHarmonics(N);
     vec3 iblIrradiance = texture2D(u_envTexture, equirectUv(N), 10.0).xyz;
@@ -129,31 +138,35 @@ void main() {
     vec3 specularColor = f0 * dfg.x + (1.0 - f0) * dfg.y;
 
     // Direct
-    float nosense = PI;
-    vec3 Fr = vec3(0.0);
+    float nosenseFactor = PI;
+
+    vec3 totalDirect = vec3(0.0);
+    
     if (u_isSuperRough) {
-        Fr = nosense * shadeLambertianSphereBRDF(NdV,  NdL, LdV, base);
+        totalDirect = nosenseFactor * shadeLambertianSphereBRDF(NdV,  NdL, LdV, base);
     } else {
         vec3 F = F_Schlick(LdH, f0, f90);
         float D = D_GGX(perceptualRoughness, NdH, H);
         float G = V_SmithGGXCorrelatedFast(NdV, NdL, perceptualRoughness);
-        Fr = nosense * (D * G) * F;
-    }
+        vec3 Fr = nosenseFactor * (D * G) * F;
 
-    vec3 energyCompensation = 1.0 + f0 * (1.0 / dfg.x - 1.0);
-    Fr *= energyCompensation;
+        vec3 energyCompensation = 1.0 + f0 * (1.0 / dfg.x - 1.0);
+        Fr *= energyCompensation;
+        vec3 directDiffuse = diffuseColor * Fd_Burley(NdV, NdL, LdH, perceptualRoughness);
+        vec3 directSpecular = Fr;
+
+        totalDirect = directDiffuse + directSpecular;
+    }
         
     float Fc = F_Schlick(LdH, 0.04, 1.0) * clearCoat;
     float Dc = D_GGX(clearCoatPerceptualRoughness, WNdH, H);
     float Vc = SmithG_GGX(WNdL, 0.25) * SmithG_GGX(WNdV, 0.25);
-    float Frc = nosense * (Dc * Vc) * Fc;
+    float Frc = nosenseFactor * (Dc * Vc) * Fc;
 
     float Ds = D_Ashikhmin( sheenRoughness, NdH );
     float Vs = V_Neubelt( NdV, NdL );
-    float Frs = nosense * Ds * Vs;
+    float Frs = nosenseFactor * Ds * Vs;
 
-    vec3 directDiffuse = diffuseColor * Fd_Burley(NdV, NdL, LdH, perceptualRoughness);
-    vec3 directSpecular = Fr;
     vec3 clearcoatSpecular = vec3(WNdL * Frc);
     vec3 sheenSpecular = vec3(NdL * Frs);
 
@@ -183,12 +196,10 @@ void main() {
     float horizon = min(1.0 + dot(refl, N), 1.0);
     indirectSpecular *= horizon * horizon;
 
-    vec3 totalDirect = directDiffuse + directSpecular;
     vec3 totalIndirect = indirectDiffuse + indirectSpecular;
     vec3 totalEmissive = emissive;
 
-
-    gl_FragColor.rgb = intensity * NdL * totalDirect;
+    gl_FragColor.rgb = intensity * NdL * (totalDirect + glitter);
 
     #include <customShadows>
 

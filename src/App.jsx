@@ -1,5 +1,5 @@
 import React from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import SceneManager from './SceneManager';
@@ -8,18 +8,14 @@ import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
 import { OrbitControls, useGLTF, useNormalTexture, useTexture } from '@react-three/drei';
 import { Leva, useControls } from 'leva';
 
-function Light() {
+function Light({ spinning }) {
 	const [light, setLight] = React.useState();
-
-	const { spinningLight } = useControls({
-		spinningLight: true,
-	});
 
 	React.useEffect(() => useStore.setState((draft) => (draft.light = light)), [light]);
 
 	useFrame(({ clock }) => {
 		const time = clock.getElapsedTime();
-		if (spinningLight) {
+		if (spinning) {
 			light.position.y = 4 * Math.cos(time);
 			light.position.x = 4 * Math.sin(time);
 			light.position.z = 4 * Math.sin(time);
@@ -58,44 +54,71 @@ function Scene() {
 	const ref = React.useRef();
 	const { nodes } = useGLTF('/assets/suzanne-draco.glb', true);
 
-	const {
-		color,
-		sheenColor,
-		normalRepeatFactor,
-		normalScale,
-		metalness,
-		roughness,
-		reflectance,
-		clearCoat,
-		clearCoatRoughness,
-		sheen,
-		normalMap,
-		compareWithThreejs,
-		sheenRoughness,
-		isSuperRough,
-	} = useControls({
-		color: '#d13d3d',
-		sheenColor: '#33ff00',
-		isSuperRough: false,
-		roughness: { value: 0.7, min: 0, max: 1, step: 0.01 },
-		metalness: { value: 0.15, min: 0, max: 1, step: 0.01 },
-		reflectance: { value: 0.8, min: 0, max: 1, step: 0.01 },
-		clearCoat: { value: 1, min: 0, max: 1, step: 0.01 },
-		clearCoatRoughness: { value: 0.2, min: 0, max: 1, step: 0.01 },
-		sheen: { value: 0.6, min: 0, max: 1, step: 0.01 },
-		sheenRoughness: { value: 0.6, min: 0, max: 1, step: 0.01 },
-		normalScale: { value: 0.8, min: 0, max: 1, step: 0.01 },
-		normalRepeatFactor: {
-			value: { x: 4, y: 4 },
-			step: 0.1,
-			min: 0,
-			max: 10,
-			step: 0.1,
-			joystick: 'invertY',
+	const { color, metalness, roughness, reflectance, isSuperRough } = useControls(
+		'Base',
+		{
+			color: '#522222',
+			roughness: { value: 0.85, min: 0, max: 1, step: 0.01 },
+			metalness: { value: 0.75, min: 0, max: 1, step: 0.01 },
+			isSuperRough: { value: true, label: 'super-rough' },
+			reflectance: { value: 0.2, min: 0, max: 1, step: 0.01 },
 		},
-		normalMap: { value: 49, min: 0, max: 74, step: 1 },
-		compareWithThreejs: false,
-	});
+		{ collapsed: true },
+	);
+
+	const { clearCoat, clearCoatRoughness } = useControls(
+		'Clearcoat',
+		{
+			clearCoat: { value: 0.1, min: 0, max: 1, step: 0.01 },
+			clearCoatRoughness: { value: 0.9, min: 0, max: 1, step: 0.01 },
+		},
+		{ collapsed: true },
+	);
+
+	const { sheenColor, sheen, sheenRoughness } = useControls(
+		'Sheen',
+		{
+			sheen: { value: 0.89, min: 0, max: 1, step: 0.01 },
+			sheenRoughness: { value: 0.4, min: 0, max: 1, step: 0.01 },
+			sheenColor: '#ad5313',
+		},
+		{ collapsed: true },
+	);
+
+	const { glitter, glitterDensity, glitterColor } = useControls(
+		'Edward Cullen',
+		{
+			glitter: { value: 0.55, min: 0, max: 1, step: 0.01 },
+			glitterDensity: { value: 3.5, min: 0, max: 8, step: 0.01 },
+			glitterColor: { value: '#d5cabe' },
+		},
+		{ collapsed: true },
+	);
+
+	const { normalRepeatFactor, normalScale, normalMap } = useControls(
+		'Normal Map',
+		{
+			normalScale: { value: 0.4, min: 0, max: 1, step: 0.01 },
+			normalRepeatFactor: {
+				value: { x: 5, y: 5 },
+				step: 0.1,
+				min: 0,
+				max: 10,
+				joystick: 'invertY',
+			},
+			normalMap: { value: 49, min: 0, max: 74, step: 1 },
+		},
+		{ collapsed: true },
+	);
+
+	const { compareWithThreejs, spinningLight } = useControls(
+		'Sim stuff',
+		{
+			compareWithThreejs: false,
+			spinningLight: true,
+		},
+		{ collapsed: true },
+	);
 
 	const [normalTexture] = useNormalTexture(normalMap);
 	const envTexture = useTexture('/assets/textures/env.jpg');
@@ -115,21 +138,28 @@ function Scene() {
 
 	useFrame(() => {
 		ref.current.material.uniforms.u_color.value.set(color);
-		ref.current.material.uniforms.u_sheenColor.value.set(sheenColor);
-		ref.current.material.uniforms.u_metalness.value = metalness;
+		ref.current.material.uniforms.u_reflectance.value = reflectance;
 		ref.current.material.uniforms.u_isSuperRough.value = isSuperRough;
 		ref.current.material.uniforms.u_roughness.value = roughness;
+		ref.current.material.uniforms.u_metalness.value = metalness;
+
+		ref.current.material.uniforms.u_clearCoat.value = clearCoat;
+		ref.current.material.uniforms.u_clearCoatRoughness.value = clearCoatRoughness;
+
+		ref.current.material.uniforms.u_sheen.value = sheen;
+		ref.current.material.uniforms.u_sheenRoughness.value = sheenRoughness;
+		ref.current.material.uniforms.u_sheenColor.value.set(sheenColor);
+
+		ref.current.material.uniforms.u_glitter.value = glitter;
+		ref.current.material.uniforms.u_glitterDensity.value = glitterDensity;
+		ref.current.material.uniforms.u_glitterColor.value.set(glitterColor);
+
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
 		ref.current.material.uniforms.u_normalRepeatFactor.value.set(
 			normalRepeatFactor.x,
 			normalRepeatFactor.y,
 		);
 		normalTexture.repeat.set(normalRepeatFactor.x, normalRepeatFactor.y);
-		ref.current.material.uniforms.u_reflectance.value = reflectance;
-		ref.current.material.uniforms.u_clearCoat.value = clearCoat;
-		ref.current.material.uniforms.u_clearCoatRoughness.value = clearCoatRoughness;
-		ref.current.material.uniforms.u_sheen.value = sheen;
-		ref.current.material.uniforms.u_sheenRoughness.value = sheenRoughness;
 	});
 
 	return (
@@ -168,7 +198,7 @@ function Scene() {
 					/>
 				</mesh>
 			)}
-			<Light />
+			<Light spinning={spinningLight} />
 			<SceneManager />
 		</>
 	);
