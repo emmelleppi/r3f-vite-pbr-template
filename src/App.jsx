@@ -70,9 +70,11 @@ function Scene() {
 		normalMap,
 		compareWithThreejs,
 		sheenRoughness,
+		isSuperRough,
 	} = useControls({
 		color: '#d13d3d',
 		sheenColor: '#33ff00',
+		isSuperRough: false,
 		roughness: { value: 0.7, min: 0, max: 1, step: 0.01 },
 		metalness: { value: 0.15, min: 0, max: 1, step: 0.01 },
 		reflectance: { value: 0.8, min: 0, max: 1, step: 0.01 },
@@ -106,6 +108,7 @@ function Scene() {
 		ref.current.material.uniforms.u_color.value.set(color);
 		ref.current.material.uniforms.u_sheenColor.value.set(sheenColor);
 		ref.current.material.uniforms.u_metalness.value = metalness;
+		ref.current.material.uniforms.u_isSuperRough.value = isSuperRough;
 		ref.current.material.uniforms.u_roughness.value = roughness;
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
 		ref.current.material.uniforms.u_normalRepeatFactor.value = normalRepeatFactor;

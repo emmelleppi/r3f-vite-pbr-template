@@ -160,3 +160,33 @@ vec2 PrefilteredDFG_Karis(float roughness, float NoV) {
 
     return vec2(-1.04, 1.04) * a004 + r.zw;
 }
+
+
+float safeacos(const float x) {
+    return acos(clamp(x, -1.0, 1.0));
+}
+
+float phase(float u) {
+    return (2.0*(sqrt(1.0 - u*u) - u * acos(u))) / (3.0*PI*PI);
+}
+
+vec3 shadeLambertianSphereBRDF(float NdV, float NdL, float LdV, vec3 color) { 
+    // https://developer.nvidia.com/blog/nvidia-research-an-analytic-brdf-for-materials-with-spherical-lambertian-scatterers/
+    float NdV2 = NdV * NdV;
+    float NdL2 = NdL * NdL;
+    float S = sqrt((1.0 - NdV2) * (1.0 - NdL2));
+    float cp = -((-LdV + NdV * NdL) / S);
+    float phi = safeacos(cp);
+    
+    vec3 C = (1.0 - pow(1.0 - color, vec3(2.73556))) / (1.0 - 0.184096 * pow(1.0 - color, vec3(2.48423)));
+
+    // Single-Scattering component, corresponds to "f_1" in the paper.
+    vec3 SS = C * (phase(-LdV) / (NdV + NdL));
+    
+    float p = NdV * NdL;
+    vec3 Fr = max( 
+        vec3(0.0), 
+        0.995917*SS+(0.0684744*(((phi+sqrt(p))*(-0.249978+C)/(4.50996*((safeacos(S)/S)+0.113706)))+pow(max(1.94208*color,0.0),vec3(1.85432))))
+    );
+    return Fr;
+}

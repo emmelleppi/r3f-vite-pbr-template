@@ -33,6 +33,7 @@ export function CustomMaterial(props) {
 				u_sheenColor: { value: new THREE.Color() },
 
 				u_roughness: { value: roughness },
+				u_isSuperRough: { value: false },
 				u_metalness: { value: metalness },
 				u_reflectance: { value: reflectance },
 				u_clearCoat: { value: clearCoat },

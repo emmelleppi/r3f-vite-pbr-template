@@ -1,3 +1,5 @@
+uniform bool u_isSuperRough;
+
 uniform float u_time;
 uniform float u_metalness;
 uniform float u_roughness;
@@ -54,7 +56,7 @@ void main() {
     #endif
 
     //
-    float intensity = 1.0;
+    float intensity = 2.0;
     float indirectIntensity = 1.0;
     vec3 color = u_color;
     vec3 baseTexture = vec3(1.0);
@@ -103,6 +105,7 @@ void main() {
     float NdL = saturate(dot(N, L));
     float NdH = saturate(dot(N, H));
     float LdH = saturate(dot(L, H));
+    float LdV = saturate(dot(L, V));
     float WNdV = abs(dot(v_worldNormal, V)) + 1e-5;
     float WNdH = saturate(dot(v_worldNormal, H));
     float WNdL = saturate(dot(v_worldNormal, L));
@@ -117,19 +120,25 @@ void main() {
 
     refl = reflect(-V, normalize(v_worldNormal) * faceDirection);
     reflUv = equirectUv(refl);
-    vec3 clearcoatRadiance = texture2D(u_envTexture, reflUv, clearCoatPerceptualRoughness * 11.0).xyz;
+    vec3 clearcoatRadiance = texture2D(u_envTexture, reflUv, clearCoatPerceptualRoughness * 5.0).xyz;
 
     // Diff and specular colors
     vec2 dfg = PrefilteredDFG_Karis(perceptualRoughness, NdV);
+    // vec2 dfg = texture2D(u_iblTexture, vec2(perceptualRoughness, NdV)).xy;
     vec3 diffuseColor = (1.0 - metalness) * base;
     vec3 specularColor = f0 * dfg.x + (1.0 - f0) * dfg.y;
 
     // Direct
-    float nosense = 4.0;
-    vec3 F = F_Schlick(LdH, f0, f90);
-    float D = D_GGX(perceptualRoughness, NdH, H);
-    float G = V_SmithGGXCorrelatedFast(NdV, NdL, perceptualRoughness);
-    vec3 Fr = nosense * (D * G) * F;
+    float nosense = PI;
+    vec3 Fr = vec3(0.0);
+    if (u_isSuperRough) {
+        Fr = nosense * shadeLambertianSphereBRDF(NdV,  NdL, LdV, base);
+    } else {
+        vec3 F = F_Schlick(LdH, f0, f90);
+        float D = D_GGX(perceptualRoughness, NdH, H);
+        float G = V_SmithGGXCorrelatedFast(NdV, NdL, perceptualRoughness);
+        Fr = nosense * (D * G) * F;
+    }
 
     vec3 energyCompensation = 1.0 + f0 * (1.0 / dfg.x - 1.0);
     Fr *= energyCompensation;
@@ -152,7 +161,8 @@ void main() {
     vec3 indirectDiffuse = diffuseColor * irradiance * Fd_Lambert();
 
     vec2 dfgCc = PrefilteredDFG_Karis(clearCoatRoughness, WNdV);
-    clearcoatSpecular += clearcoatRadiance * (0.04 * dfgCc.x + dfgCc.y);
+    // vec2 dfgCc = texture2D(u_iblTexture, vec2(clearCoatRoughness, WNdV)).xy;
+    clearcoatSpecular += clearcoatRadiance * ((0.04 + mix(0.0, 0.2, clearCoatPerceptualRoughness)) * dfgCc.x + dfgCc.y);
     sheenSpecular += iblIrradiance * IBLSheenBRDF(NdV, sheenRoughness);
 
     vec3 FssEss = specularColor * dfg.x + dfg.y;
