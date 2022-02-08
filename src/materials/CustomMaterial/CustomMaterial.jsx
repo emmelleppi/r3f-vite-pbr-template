@@ -47,7 +47,7 @@ export function CustomMaterial(props) {
 
 				u_normalTexture: { value: null },
 				u_normalScale: { value: normalScale },
-				u_normalRepeatFactor: { value: 1 },
+				u_normalRepeatFactor: { value: new THREE.Vector2(1, 1) },
 
 				u_blueNoiseTexture: { value: null },
 				u_blueNoiseTexelSize: { value: new THREE.Vector2() },

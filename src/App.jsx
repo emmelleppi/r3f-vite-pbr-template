@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { OrbitControls, useNormalTexture, useTexture } from '@react-three/drei';
+import { OrbitControls, useGLTF, useNormalTexture, useTexture } from '@react-three/drei';
 import { Leva, useControls } from 'leva';
 
 function Light() {
@@ -56,6 +56,8 @@ function Light() {
 
 function Scene() {
 	const ref = React.useRef();
+	const { nodes } = useGLTF('/assets/suzanne-draco.glb', true);
+
 	const {
 		color,
 		sheenColor,
@@ -83,7 +85,14 @@ function Scene() {
 		sheen: { value: 0.6, min: 0, max: 1, step: 0.01 },
 		sheenRoughness: { value: 0.6, min: 0, max: 1, step: 0.01 },
 		normalScale: { value: 0.8, min: 0, max: 1, step: 0.01 },
-		normalRepeatFactor: { value: 1, min: 0, max: 4, step: 0.01 },
+		normalRepeatFactor: {
+			value: { x: 4, y: 4 },
+			step: 0.1,
+			min: 0,
+			max: 10,
+			step: 0.1,
+			joystick: 'invertY',
+		},
 		normalMap: { value: 49, min: 0, max: 74, step: 1 },
 		compareWithThreejs: false,
 	});
@@ -104,14 +113,18 @@ function Scene() {
 		);
 	}, [envTexture]);
 
-	useFrame(({ gl }) => {
+	useFrame(() => {
 		ref.current.material.uniforms.u_color.value.set(color);
 		ref.current.material.uniforms.u_sheenColor.value.set(sheenColor);
 		ref.current.material.uniforms.u_metalness.value = metalness;
 		ref.current.material.uniforms.u_isSuperRough.value = isSuperRough;
 		ref.current.material.uniforms.u_roughness.value = roughness;
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
-		ref.current.material.uniforms.u_normalRepeatFactor.value = normalRepeatFactor;
+		ref.current.material.uniforms.u_normalRepeatFactor.value.set(
+			normalRepeatFactor.x,
+			normalRepeatFactor.y,
+		);
+		normalTexture.repeat.set(normalRepeatFactor.x, normalRepeatFactor.y);
 		ref.current.material.uniforms.u_reflectance.value = reflectance;
 		ref.current.material.uniforms.u_clearCoat.value = clearCoat;
 		ref.current.material.uniforms.u_clearCoatRoughness.value = clearCoatRoughness;
@@ -121,13 +134,24 @@ function Scene() {
 
 	return (
 		<>
-			<mesh ref={ref} castShadow receiveShadow position-x={compareWithThreejs ? -2 : 0}>
-				<torusKnotBufferGeometry args={[1, 0.45, 128, 32]} />
+			<mesh
+				ref={ref}
+				geometry={nodes.Suzanne.geometry}
+				castShadow
+				receiveShadow
+				position-x={compareWithThreejs ? -1.5 : 0}
+				rotation-y={compareWithThreejs ? 0.05 * Math.PI : 0}
+			>
 				<CustomMaterial />
 			</mesh>
 			{compareWithThreejs && (
-				<mesh castShadow receiveShadow position-x={2}>
-					<torusKnotBufferGeometry args={[1, 0.45, 128, 32]} />
+				<mesh
+					geometry={nodes.Suzanne.geometry}
+					castShadow
+					receiveShadow
+					position-x={1.5}
+					rotation-y={-0.05 * Math.PI}
+				>
 					<meshPhysicalMaterial
 						color={color}
 						metalness={metalness}
@@ -166,7 +190,7 @@ export function App() {
 					position: [0, 0, 5],
 					near: 0.1,
 					far: 100,
-					fov: 70,
+					fov: 50,
 				}}
 			>
 				<color args={['black']} attach="background" />
@@ -179,3 +203,5 @@ export function App() {
 		</div>
 	);
 }
+
+useGLTF.preload('/assets/suzanne-draco.glb');

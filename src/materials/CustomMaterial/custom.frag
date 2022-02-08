@@ -8,10 +8,10 @@ uniform float u_sheen;
 uniform float u_clearCoatRoughness;
 uniform float u_reflectance;
 uniform float u_normalScale;
-uniform float u_normalRepeatFactor;
 uniform float u_sheenRoughness;
 
 uniform vec2 u_envTextureSize;
+uniform vec2 u_normalRepeatFactor;
 
 uniform vec3 u_color;
 uniform vec3 u_sheenColor;
