@@ -25,11 +25,6 @@ function useNormalTexture(id = 0) {
 			.then((data) => setNormalsList(data));
 	}, [setNormalsList]);
 
-	React.useEffect(() => {
-		if (!normalTexture) return;
-		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
-	}, [normalTexture]);
-
 	return [normalTexture];
 }
 
@@ -147,11 +142,8 @@ function Scene() {
 
 	const [normalTexture] = useNormalTexture(normalMap);
 	const envTexture = useTexture('/assets/textures/env.jpg');
+	normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
 
-	React.useEffect(() => {
-		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
-		ref.current.material.uniforms.u_normalTexture.value = normalTexture;
-	}, [normalTexture]);
 	React.useEffect(() => {
 		envTexture.mapping = THREE.EquirectangularReflectionMapping;
 		ref.current.material.uniforms.u_envTexture.value = envTexture;
@@ -185,6 +177,7 @@ function Scene() {
 			normalRepeatFactor.y,
 		);
 		normalTexture.repeat.set(normalRepeatFactor.x, normalRepeatFactor.y);
+		ref.current.material.uniforms.u_normalTexture.value = normalTexture;
 	});
 
 	return (
