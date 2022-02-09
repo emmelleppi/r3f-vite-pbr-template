@@ -8,8 +8,7 @@ import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
 import { OrbitControls, useGLTF, useTexture } from '@react-three/drei';
 import { Leva, useControls } from 'leva';
 
-const NORMAL_ROOT =
-	'https://rawcdn.githack.com/emmelleppi/normal-maps/f24c810fc1d86b5b1e5dfea914b668f70b5f2923';
+const NORMAL_ROOT = 'https://cdn.jsdelivr.net/gh/emmelleppi/normal-maps';
 const DEFAULT_NORMAL = '151_norm.JPG';
 
 function useNormalTexture(id = 0) {
@@ -20,7 +19,7 @@ function useNormalTexture(id = 0) {
 	const normalTexture = useTexture(url);
 
 	React.useEffect(() => {
-		fetch(`${NORMAL_ROOT}/normals.json`)
+		fetch(`${NORMAL_ROOT}/normals_list2.json`)
 			.then((response) => response.json())
 			.then((data) => setNormalsList(data));
 	}, [setNormalsList]);
