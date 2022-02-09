@@ -5,8 +5,27 @@ import * as THREE from 'three';
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { OrbitControls, useGLTF, useNormalTexture, useTexture } from '@react-three/drei';
+import { OrbitControls, useGLTF, useTexture } from '@react-three/drei';
 import { Leva, useControls } from 'leva';
+
+const NORMAL_ROOT = 'https://cdn.jsdelivr.net/gh/emmelleppi/normal-maps';
+const DEFAULT_NORMAL = '151_norm.JPG';
+
+function useNormalTexture(id = 0) {
+	const [normalsList, setNormalsList] = React.useState({});
+	const imageName = normalsList[id] || DEFAULT_NORMAL;
+	const url = `${NORMAL_ROOT}/normals/${imageName}`;
+
+	const normalTexture = useTexture(url);
+
+	React.useEffect(() => {
+		fetch(`${NORMAL_ROOT}/normals_list2.json`)
+			.then((response) => response.json())
+			.then((data) => setNormalsList(data));
+	}, [setNormalsList]);
+
+	return [normalTexture];
+}
 
 function Light({ spinning }) {
 	const [light, setLight] = React.useState();
@@ -123,12 +142,7 @@ function Scene() {
 
 	const [normalTexture] = useNormalTexture(normalMap);
 	const envTexture = useTexture('/assets/textures/env.jpg');
-
-	React.useEffect(() => {
-		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
-		ref.current.material.uniforms.u_normalTexture.value = normalTexture;
-		refPlane.current.material.uniforms.u_normalTexture.value = normalTexture;
-	}, [normalTexture]);
+	normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
 
 	React.useEffect(() => {
 		envTexture.mapping = THREE.EquirectangularReflectionMapping;
@@ -162,6 +176,7 @@ function Scene() {
 		ref.current.material.uniforms.u_glitterDensity.value = glitterDensity;
 		ref.current.material.uniforms.u_glitterColor.value.set(glitterColor);
 
+		ref.current.material.uniforms.u_normalTexture.value = normalTexture;
 		ref.current.material.uniforms.u_normalScale.value = normalScale;
 		ref.current.material.uniforms.u_normalRepeatFactor.value.set(
 			normalRepeatFactor.x,
