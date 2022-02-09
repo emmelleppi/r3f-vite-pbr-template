@@ -52,6 +52,7 @@ function Light({ spinning }) {
 
 function Scene() {
 	const ref = React.useRef();
+	const refPlane = React.useRef();
 	const { nodes } = useGLTF('/assets/suzanne-draco.glb', true);
 
 	const { color, metalness, roughness, reflectance, isSuperRough } = useControls(
@@ -126,11 +127,18 @@ function Scene() {
 	React.useEffect(() => {
 		normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
 		ref.current.material.uniforms.u_normalTexture.value = normalTexture;
+		refPlane.current.material.uniforms.u_normalTexture.value = normalTexture;
 	}, [normalTexture]);
+
 	React.useEffect(() => {
 		envTexture.mapping = THREE.EquirectangularReflectionMapping;
 		ref.current.material.uniforms.u_envTexture.value = envTexture;
 		ref.current.material.uniforms.u_envTextureSize.value.set(
+			envTexture.image.width,
+			envTexture.image.height,
+		);
+		refPlane.current.material.uniforms.u_envTexture.value = envTexture;
+		refPlane.current.material.uniforms.u_envTextureSize.value.set(
 			envTexture.image.width,
 			envTexture.image.height,
 		);
@@ -160,6 +168,11 @@ function Scene() {
 			normalRepeatFactor.y,
 		);
 		normalTexture.repeat.set(normalRepeatFactor.x, normalRepeatFactor.y);
+
+		refPlane.current.material.uniforms.u_color.value.set('#fff');
+		refPlane.current.material.uniforms.u_roughness.value = 1;
+		refPlane.current.material.uniforms.u_metalness.value = 0;
+		refPlane.current.material.uniforms.u_reflectance.value = 0;
 	});
 
 	return (
@@ -198,6 +211,10 @@ function Scene() {
 					/>
 				</mesh>
 			)}
+			<mesh ref={refPlane} receiveShadow position={[0, 0, -5]}>
+				<planeBufferGeometry args={[20, 20]} />
+				<CustomMaterial color="white" />
+			</mesh>
 			<Light spinning={spinningLight} />
 			<SceneManager />
 		</>

@@ -10,15 +10,7 @@ import { useStore } from '@/store';
 const materialKey = Math.random();
 
 export function CustomMaterial(props) {
-	const {
-		color = '#ffffff',
-		metalness = 0.5,
-		reflectance = 0,
-		roughness = 0.5,
-		normalScale = 0,
-		clearCoat = 0,
-		clearCoatRoughness = 0,
-	} = props;
+	const { color = '#ffffff' } = props;
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
@@ -30,15 +22,15 @@ export function CustomMaterial(props) {
 				u_deltaTime: { value: 0 },
 				u_time: { value: 0 },
 
-				u_color: { value: new THREE.Color() },
-				u_reflectance: { value: reflectance },
+				u_color: { value: new THREE.Color(color) },
+				u_reflectance: { value: 1 },
 
 				u_isSuperRough: { value: false },
-				u_roughness: { value: roughness },
-				u_metalness: { value: metalness },
+				u_roughness: { value: 1 },
+				u_metalness: { value: 0 },
 
-				u_clearCoat: { value: clearCoat },
-				u_clearCoatRoughness: { value: clearCoatRoughness },
+				u_clearCoat: { value: 0 },
+				u_clearCoatRoughness: { value: 0 },
 
 				u_sheen: { value: 0 },
 				u_sheenRoughness: { value: 0 },
@@ -54,7 +46,7 @@ export function CustomMaterial(props) {
 				u_glitterNoiseTexture: { value: null },
 
 				u_normalTexture: { value: null },
-				u_normalScale: { value: normalScale },
+				u_normalScale: { value: 0 },
 				u_normalRepeatFactor: { value: new THREE.Vector2(1, 1) },
 
 				u_blueNoiseTexture: { value: null },
@@ -64,6 +56,11 @@ export function CustomMaterial(props) {
 
 				u_envTexture: { value: null },
 				u_envTextureSize: { value: new THREE.Vector2() },
+
+				u_transmission: { value: 0 },
+				u_thickness: { value: 0 },
+				u_transmissionSamplerSize: { value: new THREE.Vector2() },
+				u_transmissionSamplerMap: { value: null },
 			},
 			THREE.UniformsLib.lights,
 		]);

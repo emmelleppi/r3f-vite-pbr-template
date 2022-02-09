@@ -190,3 +190,49 @@ vec3 shadeLambertianSphereBRDF(float NdV, float NdL, float LdV, vec3 color) {
     );
     return Fr;
 }
+
+
+// Transmission stuff
+vec3 getVolumeTransmissionRay( const in vec3 n, const in vec3 v, const in float thickness, const in float ior, const in mat4 modelMatrix ) {
+    // Direction of refracted light.
+    vec3 refractionVector = refract( - v, normalize( n ), 1.0 / ior );
+
+    // Compute rotation-independant scaling of the model matrix.
+    vec3 modelScale;
+    modelScale.x = length( vec3( modelMatrix[ 0 ].xyz ) );
+    modelScale.y = length( vec3( modelMatrix[ 1 ].xyz ) );
+    modelScale.z = length( vec3( modelMatrix[ 2 ].xyz ) );
+
+    // The thickness is specified in local space.
+    return normalize( refractionVector ) * thickness * modelScale;
+}
+
+
+vec4 getTransmissionSample( const in vec2 fragCoord, const in float roughness, const in float ior ) {
+    float framebufferLod = log2( u_transmissionSamplerSize.x ) * roughness * clamp( ior * 2.0 - 2.0, 0.0, 1.0 );
+    return texture2D( u_transmissionSamplerMap, fragCoord.xy, framebufferLod );
+}
+
+vec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,
+    const in vec3 position, const in mat4 modelMatrix,
+    const in mat4 viewMatrix, const in mat4 projMatrix, const in float ior, const in float thickness ) {
+
+    vec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, ior, modelMatrix );
+    vec3 refractedRayExit = position + transmissionRay;
+
+    // Project refracted vector on the framebuffer, while mapping to normalized device coordinates.
+    vec4 ndcPos = projMatrix * viewMatrix * vec4( refractedRayExit, 1.0 );
+    vec2 refractionCoords = ndcPos.xy / ndcPos.w;
+    refractionCoords += 1.0;
+    refractionCoords /= 2.0;
+
+    // Sample framebuffer to get pixel the refracted ray hits.
+    vec4 transmittedLight = getTransmissionSample( refractionCoords, roughness, ior );
+
+    vec3 attenuatedColor = transmittedLight.rgb;
+
+    // Get the specular component.
+    vec3 F = EnvironmentBRDF( n, v, specularColor, specularF90, roughness );
+
+    return vec4( ( 1.0 - F ) * attenuatedColor * diffuseColor, transmittedLight.a );
+}

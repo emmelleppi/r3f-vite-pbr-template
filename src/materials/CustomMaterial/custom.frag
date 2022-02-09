@@ -25,12 +25,20 @@ uniform sampler2D u_glitterNoiseTexture;
 uniform vec2 u_envTextureSize;
 uniform vec2 u_normalRepeatFactor;
 
-uniform mat3 normalMatrix;
 uniform float u_normalScale;
 uniform sampler2D u_normalTexture;
 
 uniform sampler2D u_iblTexture;
 uniform sampler2D u_envTexture;
+
+uniform float u_transmission;
+uniform float u_thickness;
+uniform vec2 u_transmissionSamplerSize;
+uniform sampler2D u_transmissionSamplerMap;
+
+uniform mat3 normalMatrix;
+uniform mat4 modelMatrix;
+uniform mat4 projectionMatrix;
 
 varying vec2 v_uv;
 varying vec3 v_viewPosition;
@@ -70,9 +78,8 @@ void main() {
     // calculate world normal with normalMap
     vec3 noise = texture2D(u_glitterNoiseTexture, u_glitterDensity * v_uv).rgb * 2.0 - 1.0;
     vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
-    N = normalize( v_normal + 0.5 * u_glitter * noise ) * faceDirection;
+    N = normalize( v_worldNormal + 0.5 * u_glitter * noise ) * faceDirection;
     N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
-    N = inverseTransformDirection(normalMatrix * N, viewMatrix);
     
     float glitter = saturate(dot(L, noise) + dot(V, noise) - 1.0);
     glitter = u_glitter * smoothstep(0.7, 0.8, glitter);
@@ -216,6 +223,20 @@ void main() {
     #include <tonemapping_fragment>
 	#include <encodings_fragment>
     gl_FragColor = sRGBToLinear(gl_FragColor);
+
+
+
+    float transmissionAlpha = 1.0;
+    float transmissionFactor = u_transmission;
+    float thicknessFactor = u_thickness;
+    float ior = 1.0;
+
+    vec4 transmission = getIBLVolumeRefraction(inverseTransformDirection(N, viewMatrix), V, perceptualRoughness, diffuseColor,
+    v_worldPosition, modelMatrix, viewMatrix, projectionMatrix, ior, thicknessFactor);
+
+
+// totalDiffuse = mix( totalDiffuse, transmission.rgb, transmissionFactor );
+// transmissionAlpha = mix( transmissionAlpha, transmission.a, transmissionFactor );
 }
 
 
