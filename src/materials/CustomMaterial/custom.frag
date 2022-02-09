@@ -68,15 +68,14 @@ void main() {
     vec3 H = normalize(L + V);
     
     // calculate world normal with normalMap
-    #ifdef USE_NORMAL_MAP
-        vec3 noise = texture2D(u_glitterNoiseTexture, u_glitterDensity * v_uv).rgb * 2.0 - 1.0;
-        vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
-        N = normalize( v_normal ) * faceDirection;
-        N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
-        N = inverseTransformDirection(normalMatrix * (N  + 0.5 * u_glitter * noise), viewMatrix);
-    #endif
+    vec3 noise = texture2D(u_glitterNoiseTexture, u_glitterDensity * v_uv).rgb * 2.0 - 1.0;
+    vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
+    N = normalize( v_normal + 0.5 * u_glitter * noise ) * faceDirection;
+    N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
+    N = inverseTransformDirection(normalMatrix * N, viewMatrix);
     
-    float glitter = u_glitter * max(0.0, (dot(L, N) + dot(V, N)) * 0.5);
+    float glitter = saturate(dot(L, noise) + dot(V, noise) - 1.0);
+    glitter = u_glitter * smoothstep(0.7, 0.8, glitter);
 
     //
     float intensity = 2.0;

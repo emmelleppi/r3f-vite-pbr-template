@@ -57,9 +57,9 @@ function Scene() {
 	const { color, metalness, roughness, reflectance, isSuperRough } = useControls(
 		'Base',
 		{
-			color: '#522222',
-			roughness: { value: 0.85, min: 0, max: 1, step: 0.01 },
-			metalness: { value: 0.75, min: 0, max: 1, step: 0.01 },
+			color: '#5f381d',
+			roughness: { value: 1, min: 0, max: 1, step: 0.01 },
+			metalness: { value: 0.4, min: 0, max: 1, step: 0.01 },
 			isSuperRough: { value: true, label: 'super-rough' },
 			reflectance: { value: 0.2, min: 0, max: 1, step: 0.01 },
 		},
@@ -69,8 +69,8 @@ function Scene() {
 	const { clearCoat, clearCoatRoughness } = useControls(
 		'Clearcoat',
 		{
-			clearCoat: { value: 0.1, min: 0, max: 1, step: 0.01 },
-			clearCoatRoughness: { value: 0.9, min: 0, max: 1, step: 0.01 },
+			clearCoat: { value: 0, min: 0, max: 1, step: 0.01 },
+			clearCoatRoughness: { value: 0, min: 0, max: 1, step: 0.01 },
 		},
 		{ collapsed: true },
 	);
@@ -78,7 +78,7 @@ function Scene() {
 	const { sheenColor, sheen, sheenRoughness } = useControls(
 		'Sheen',
 		{
-			sheen: { value: 0.89, min: 0, max: 1, step: 0.01 },
+			sheen: { value: 0.9, min: 0, max: 1, step: 0.01 },
 			sheenRoughness: { value: 0.4, min: 0, max: 1, step: 0.01 },
 			sheenColor: '#ad5313',
 		},
@@ -88,9 +88,9 @@ function Scene() {
 	const { glitter, glitterDensity, glitterColor } = useControls(
 		'Edward Cullen',
 		{
-			glitter: { value: 0.55, min: 0, max: 1, step: 0.01 },
-			glitterDensity: { value: 3.5, min: 0, max: 8, step: 0.01 },
-			glitterColor: { value: '#d5cabe' },
+			glitter: { value: 0.6, min: 0, max: 1, step: 0.01 },
+			glitterDensity: { value: 5.5, min: 0, max: 8, step: 0.01 },
+			glitterColor: { value: '#cba884' },
 		},
 		{ collapsed: true },
 	);
@@ -98,7 +98,7 @@ function Scene() {
 	const { normalRepeatFactor, normalScale, normalMap } = useControls(
 		'Normal Map',
 		{
-			normalScale: { value: 0.4, min: 0, max: 1, step: 0.01 },
+			normalScale: { value: 0.2, min: 0, max: 1, step: 0.01 },
 			normalRepeatFactor: {
 				value: { x: 5, y: 5 },
 				step: 0.1,
