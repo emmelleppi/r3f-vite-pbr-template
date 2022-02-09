@@ -61,20 +61,6 @@ void main() {
         metalness *= texture2D(u_metalnessTexture, v_uv).r;
     #endif
 
-    //
-    float intensity = 2.0;
-    float indirectIntensity = 1.0;
-    vec3 color = u_color;
-    vec3 baseTexture = vec3(1.0);
-    vec3 base = color * baseTexture;
-    vec3 ambient = base * u_ambientLight;
-    float reflectance = u_reflectance;
-    vec3 emissive = vec3(0.0);
-
-    // 
-    vec3 f0 = 0.16 * reflectance * reflectance * (1.0 - metalness) + base * metalness;
-    vec3 f90 = vec3(clamp(dot(f0, vec3(50.0 * 0.33)), 0.0, 1.0));
-
     // 
     vec3 N = normalize(v_worldNormal) * faceDirection;
     vec3 L = normalize(u_lightPosition - v_worldPosition);
@@ -89,6 +75,23 @@ void main() {
         N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
         N = inverseTransformDirection(normalMatrix * (N  + 0.5 * u_glitter * noise), viewMatrix);
     #endif
+    
+    float glitter = u_glitter * max(0.0, (dot(L, N) + dot(V, N)) * 0.5);
+
+    //
+    float intensity = 2.0;
+    float indirectIntensity = 1.0;
+    vec3 color = mix(u_color, u_glitterColor, glitter);
+    vec3 baseTexture = vec3(1.0);
+    vec3 base = color * baseTexture;
+    vec3 ambient = base * u_ambientLight;
+    float reflectance = u_reflectance;
+    vec3 emissive = vec3(0.0);
+
+    // 
+    vec3 f0 = 0.16 * reflectance * reflectance * (1.0 - metalness) + base * metalness;
+    vec3 f90 = vec3(clamp(dot(f0, vec3(50.0 * 0.33)), 0.0, 1.0));
+
 
     // roughness adjustment
     vec3 dxy = max(abs(dFdx(N)), abs(dFdy(N)));
@@ -116,8 +119,6 @@ void main() {
     float WNdV = abs(dot(v_worldNormal, V)) + 1e-5;
     float WNdH = saturate(dot(v_worldNormal, H));
     float WNdL = saturate(dot(v_worldNormal, L));
-    
-    vec3 glitter = u_glitterColor * u_glitter * max(0.0,  dot(H, noise) - 0.5);
 
     // irradiance and radiance
     vec3 irradiance = Irradiance_SphericalHarmonics(N);
@@ -199,7 +200,7 @@ void main() {
     vec3 totalIndirect = indirectDiffuse + indirectSpecular;
     vec3 totalEmissive = emissive;
 
-    gl_FragColor.rgb = intensity * NdL * (totalDirect + glitter);
+    gl_FragColor.rgb = intensity * NdL * totalDirect;
 
     #include <customShadows>
 
