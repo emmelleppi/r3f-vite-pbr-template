@@ -13,10 +13,13 @@ export function CustomMaterial(props) {
 	const { color = '#ffffff' } = props;
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
-	const iblTexture = useTexture('/assets/textures/ibl_brdf_lut.webp');
 	const canvasGeneratedNoise = useStore(({ canvasGeneratedNoise }) => canvasGeneratedNoise);
 
 	const material = React.useMemo(() => {
+		const shCoefficients = [];
+		for (let i = 0; i < 9; i++) {
+			shCoefficients.push(new THREE.Vector3());
+		}
 		const uniforms = THREE.UniformsUtils.merge([
 			{
 				u_deltaTime: { value: 0 },
@@ -24,6 +27,8 @@ export function CustomMaterial(props) {
 
 				u_color: { value: new THREE.Color(color) },
 				u_reflectance: { value: 1 },
+				u_directIntensity: { value: 1 },
+				u_indirectIntensity: { value: 0.5 },
 
 				u_isSuperRough: { value: false },
 				u_roughness: { value: 1 },
@@ -52,14 +57,14 @@ export function CustomMaterial(props) {
 				u_blueNoiseTexture: { value: null },
 				u_blueNoiseTexelSize: { value: new THREE.Vector2() },
 
-				u_iblTexture: { value: null },
-
 				u_envTexture: { value: null },
 				u_envTextureSize: { value: new THREE.Vector2() },
+				u_shCoefficients: { value: shCoefficients },
 
 				u_transmission: { value: 0 },
+				u_ior: { value: 1 },
 				u_thickness: { value: 0 },
-				u_transmissionSamplerSize: { value: new THREE.Vector2() },
+				u_transmissionSamplerSize: { value: new THREE.Vector2(1024, 1024) },
 				u_transmissionSamplerMap: { value: null },
 			},
 			THREE.UniformsLib.lights,
@@ -95,10 +100,6 @@ export function CustomMaterial(props) {
 			1 / bluenoiseTexture.image.height,
 		);
 	}, [material, bluenoiseTexture]);
-
-	React.useEffect(() => {
-		material.uniforms.u_iblTexture.value = iblTexture;
-	}, [material, iblTexture]);
 
 	React.useEffect(() => {
 		material.uniforms.u_glitterNoiseTexture.value = canvasGeneratedNoise;

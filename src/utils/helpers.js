@@ -60,13 +60,19 @@ export function useFboRender() {
 
 	const render = useCallback(
 		(material, renderTarget) => {
-			triMesh.material = material;
-			if (renderTarget) {
+			if (renderTarget && material) {
+				triMesh.material = material;
+
+				const currentRenderTarget = gl.getRenderTarget();
+				const currentToneMapping = gl.toneMapping;
+
+				gl.toneMapping = THREE.NoToneMapping;
 				gl.setRenderTarget(renderTarget);
-			}
-			gl.render(scene, camera);
-			if (renderTarget) {
-				gl.setRenderTarget(null);
+				gl.clear();
+				gl.render(scene, camera);
+
+				gl.toneMapping = currentToneMapping;
+				gl.setRenderTarget(currentRenderTarget);
 			}
 		},
 		[gl, triMesh, scene, camera],

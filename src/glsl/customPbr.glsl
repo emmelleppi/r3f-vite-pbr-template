@@ -15,31 +15,6 @@ vec3 perturbNormal2Arb( vec3 eye_pos, vec3 surf_norm, vec3 mapN, float faceDirec
     return normalize( T * ( mapN.x * scale ) + B * ( mapN.y * scale ) + N * mapN.z );
 }
 
-// float normalFiltering(float roughness, const vec3 worldNormal) {
-//     // Kaplanyan 2016, "Stable specular highlights"
-//     // Tokuyoshi 2017, "Error Reduction and Simplification for Shading Anti-Aliasing"
-//     // Tokuyoshi and Kaplanyan 2019, "Improved Geometric Specular Antialiasing"
-
-//     // This implementation is meant for deferred rendering in the original paper but
-//     // we use it in forward rendering as well (as discussed in Tokuyoshi and Kaplanyan
-//     // 2019). The main reason is that the forward version requires an expensive transform
-//     // of the half vector by the tangent frame for every light. This is therefore an
-//     // approximation but it works well enough for our needs and provides an improvement
-//     // over our original implementation based on Vlachos 2015, "Advanced VR Rendering".
-
-//     vec3 du = dFdx(worldNormal);
-//     vec3 dv = dFdy(worldNormal);
-// 	float _specularAntiAliasingVariance = 2.0;
-// 	float _specularAntiAliasingThreshold = 0.01;
-//     float variance = _specularAntiAliasingVariance * (dot(du, du) + dot(dv, dv));
-
-//     float kernelRoughness = min(2.0 * variance, _specularAntiAliasingThreshold);
-//     float squareRoughness = clamp(roughness * roughness + kernelRoughness, 0.0, 1.0);
-
-//     return sqrt(squareRoughness);
-// }
-
-
 // Fresnel - Specular F
 // Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
 float F_Schlick(float product, float f0, float f90) {
@@ -150,6 +125,24 @@ vec3 Irradiance_SphericalHarmonics(const vec3 n) {
         , 0.0);
 }
 
+vec3 shGetIrradianceAt( in vec3 normal, in vec3 shCoefficients[ 9 ] ) {
+	// normal is assumed to have unit length
+	float x = normal.x, y = normal.y, z = normal.z;
+	// band 0
+	vec3 result = shCoefficients[ 0 ] * 0.886227;
+	// band 1
+	result += shCoefficients[ 1 ] * 2.0 * 0.511664 * y;
+	result += shCoefficients[ 2 ] * 2.0 * 0.511664 * z;
+	result += shCoefficients[ 3 ] * 2.0 * 0.511664 * x;
+	// band 2
+	result += shCoefficients[ 4 ] * 2.0 * 0.429043 * x * y;
+	result += shCoefficients[ 5 ] * 2.0 * 0.429043 * y * z;
+	result += shCoefficients[ 6 ] * ( 0.743125 * z * z - 0.247708 );
+	result += shCoefficients[ 7 ] * 2.0 * 0.429043 * x * z;
+	result += shCoefficients[ 8 ] * 0.429043 * ( x * x - y * y );
+	return result;
+}
+
 vec2 PrefilteredDFG_Karis(float roughness, float NoV) {
     // Karis 2014, "Physically Based Material on Mobile"
     const vec4 c0 = vec4(-1.0, -0.0275, -0.572,  0.022);
@@ -184,11 +177,10 @@ vec3 shadeLambertianSphereBRDF(float NdV, float NdL, float LdV, vec3 color) {
     vec3 SS = C * (phase(-LdV) / (NdV + NdL));
     
     float p = NdV * NdL;
-    vec3 Fr = max( 
+    return max(
         vec3(0.0), 
-        0.995917*SS+(0.0684744*(((phi+sqrt(p))*(-0.249978+C)/(4.50996*((safeacos(S)/S)+0.113706)))+pow(max(1.94208*color,0.0),vec3(1.85432))))
+        0.995917 * SS + (0.0684744 * (((phi + sqrt(p)) * (-0.249978 + C) / (4.50996 * ((safeacos(S) / S) + 0.113706))) + pow(max(1.94208 * color, 0.0), vec3(1.85432))))
     );
-    return Fr;
 }
 
 
@@ -213,10 +205,19 @@ vec4 getTransmissionSample( const in vec2 fragCoord, const in float roughness, c
     return texture2D( u_transmissionSamplerMap, fragCoord.xy, framebufferLod );
 }
 
-vec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float roughness, const in vec3 diffuseColor,
-    const in vec3 position, const in mat4 modelMatrix,
-    const in mat4 viewMatrix, const in mat4 projMatrix, const in float ior, const in float thickness ) {
-
+vec4 getIBLVolumeRefraction(
+    const in vec3 n,
+    const in vec3 v,
+    const in float roughness,
+    const in vec3 diffuseColor,
+    const in vec3 position,
+    const in mat4 modelMatrix,
+    const in mat4 viewMatrix,
+    const in mat4 projMatrix,
+    const in float ior,
+    const in float thickness,
+    const float F
+) {
     vec3 transmissionRay = getVolumeTransmissionRay( n, v, thickness, ior, modelMatrix );
     vec3 refractedRayExit = position + transmissionRay;
 
@@ -230,9 +231,6 @@ vec4 getIBLVolumeRefraction( const in vec3 n, const in vec3 v, const in float ro
     vec4 transmittedLight = getTransmissionSample( refractionCoords, roughness, ior );
 
     vec3 attenuatedColor = transmittedLight.rgb;
-
-    // Get the specular component.
-    vec3 F = EnvironmentBRDF( n, v, specularColor, specularF90, roughness );
 
     return vec4( ( 1.0 - F ) * attenuatedColor * diffuseColor, transmittedLight.a );
 }

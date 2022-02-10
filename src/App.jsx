@@ -1,12 +1,14 @@
 import React from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { OrbitControls, useGLTF, useTexture } from '@react-three/drei';
+import { OrbitControls, useCubeTexture, useGLTF, useTexture } from '@react-three/drei';
 import { Leva, useControls } from 'leva';
+import { useCopyMaterial, useFboRender } from './utils/helpers';
+import { LightProbeGenerator } from 'three-stdlib';
 
 const NORMAL_ROOT = 'https://cdn.jsdelivr.net/gh/emmelleppi/normal-maps';
 const DEFAULT_NORMAL = '151_norm.JPG';
@@ -71,17 +73,44 @@ function Light({ spinning }) {
 
 function Scene() {
 	const ref = React.useRef();
-	const refPlane = React.useRef();
+	const gl = useThree(({ gl }) => gl);
+	const scene = useThree(({ scene }) => scene);
+
+	const transmissionRenderTarget = React.useState(
+		() =>
+			new THREE.WebGLRenderTarget(1024, 1024, {
+				generateMipmaps: true,
+				type: THREE.HalfFloatType,
+				minFilter: THREE.LinearMipmapLinearFilter,
+				magFilter: THREE.NearestFilter,
+				wrapS: THREE.ClampToEdgeWrapping,
+				wrapT: THREE.ClampToEdgeWrapping,
+				useRenderToTexture: gl.extensions.has('WEBGL_multisampled_render_to_texture'),
+			}),
+	)[0];
+	const render = useFboRender();
+	const copyMaterial = useCopyMaterial();
+
 	const { nodes } = useGLTF('/assets/suzanne-draco.glb', true);
 
-	const { color, metalness, roughness, reflectance, isSuperRough } = useControls(
+	const {
+		color,
+		metalness,
+		roughness,
+		reflectance,
+		isSuperRough,
+		directIntensity,
+		indirectIntensity,
+	} = useControls(
 		'Base',
 		{
-			color: '#5f381d',
-			roughness: { value: 1, min: 0, max: 1, step: 0.01 },
-			metalness: { value: 0.4, min: 0, max: 1, step: 0.01 },
+			color: '#f868ef',
+			directIntensity: { value: 3, min: 0, max: 4, step: 0.01 },
+			indirectIntensity: { value: 0.8, min: 0, max: 4, step: 0.01 },
+			roughness: { value: 0.15, min: 0, max: 1, step: 0.01 },
+			metalness: { value: 0.35, min: 0, max: 1, step: 0.01 },
 			isSuperRough: { value: true, label: 'super-rough' },
-			reflectance: { value: 0.2, min: 0, max: 1, step: 0.01 },
+			reflectance: { value: 0.5, min: 0, max: 1, step: 0.01 },
 		},
 		{ collapsed: true },
 	);
@@ -94,13 +123,22 @@ function Scene() {
 		},
 		{ collapsed: true },
 	);
+	const { transmission, thickness, ior } = useControls(
+		'Transmission',
+		{
+			transmission: { value: 0.5, min: 0, max: 1, step: 0.01 },
+			thickness: { value: 1, min: 0, max: 1, step: 0.01 },
+			ior: { value: 1.4, min: 1, max: 1.5, step: 0.01 },
+		},
+		{ collapsed: true },
+	);
 
 	const { sheenColor, sheen, sheenRoughness } = useControls(
 		'Sheen',
 		{
-			sheen: { value: 0.9, min: 0, max: 1, step: 0.01 },
-			sheenRoughness: { value: 0.4, min: 0, max: 1, step: 0.01 },
-			sheenColor: '#ad5313',
+			sheen: { value: 1, min: 0, max: 1, step: 0.01 },
+			sheenRoughness: { value: 0.5, min: 0, max: 1, step: 0.01 },
+			sheenColor: '#f6b6ff',
 		},
 		{ collapsed: true },
 	);
@@ -108,9 +146,9 @@ function Scene() {
 	const { glitter, glitterDensity, glitterColor } = useControls(
 		'Edward Cullen',
 		{
-			glitter: { value: 0.6, min: 0, max: 1, step: 0.01 },
-			glitterDensity: { value: 5.5, min: 0, max: 8, step: 0.01 },
-			glitterColor: { value: '#cba884' },
+			glitter: { value: 0.45, min: 0, max: 1, step: 0.01 },
+			glitterDensity: { value: 3, min: 0, max: 3, step: 0.01 },
+			glitterColor: { value: '#3300ff' },
 		},
 		{ collapsed: true },
 	);
@@ -118,7 +156,7 @@ function Scene() {
 	const { normalRepeatFactor, normalScale, normalMap } = useControls(
 		'Normal Map',
 		{
-			normalScale: { value: 0.2, min: 0, max: 1, step: 0.01 },
+			normalScale: { value: 0.1, min: 0, max: 1, step: 0.01 },
 			normalRepeatFactor: {
 				value: { x: 5, y: 5 },
 				step: 0.1,
@@ -141,26 +179,25 @@ function Scene() {
 	);
 
 	const [normalTexture] = useNormalTexture(normalMap);
-	const envTexture = useTexture('/assets/textures/env.jpg');
 	normalTexture.wrapS = normalTexture.wrapT = THREE.RepeatWrapping;
 
+	const envTexture = useCubeTexture(
+		['px.png', 'nx.png', 'py.png', 'ny.png', 'pz.png', 'nz.png'],
+		{ path: '/assets/textures/pisa/' },
+	);
+
 	React.useEffect(() => {
-		envTexture.mapping = THREE.EquirectangularReflectionMapping;
-		ref.current.material.uniforms.u_envTexture.value = envTexture;
-		ref.current.material.uniforms.u_envTextureSize.value.set(
-			envTexture.image.width,
-			envTexture.image.height,
-		);
-		refPlane.current.material.uniforms.u_envTexture.value = envTexture;
-		refPlane.current.material.uniforms.u_envTextureSize.value.set(
-			envTexture.image.width,
-			envTexture.image.height,
-		);
-	}, [envTexture]);
+		scene.background = envTexture;
+		scene.environment = envTexture;
+		ref.current.material.uniforms.u_shCoefficients.value =
+			LightProbeGenerator.fromCubeTexture(envTexture).sh.coefficients;
+	}, [scene, envTexture]);
 
 	useFrame(() => {
 		ref.current.material.uniforms.u_color.value.set(color);
 		ref.current.material.uniforms.u_reflectance.value = reflectance;
+		ref.current.material.uniforms.u_directIntensity.value = directIntensity;
+		ref.current.material.uniforms.u_indirectIntensity.value = indirectIntensity;
 		ref.current.material.uniforms.u_isSuperRough.value = isSuperRough;
 		ref.current.material.uniforms.u_roughness.value = roughness;
 		ref.current.material.uniforms.u_metalness.value = metalness;
@@ -182,12 +219,16 @@ function Scene() {
 			normalRepeatFactor.x,
 			normalRepeatFactor.y,
 		);
-		normalTexture.repeat.set(normalRepeatFactor.x, normalRepeatFactor.y);
+		ref.current.material.uniforms.u_transmission.value = transmission;
+		ref.current.material.uniforms.u_thickness.value = thickness;
+		ref.current.material.uniforms.u_ior.value = ior;
+		ref.current.material.uniforms.u_envTexture.value = envTexture;
+		ref.current.material.uniforms.u_envTextureSize.value.set(
+			envTexture.image.width,
+			envTexture.image.height,
+		);
 
-		refPlane.current.material.uniforms.u_color.value.set('#fff');
-		refPlane.current.material.uniforms.u_roughness.value = 1;
-		refPlane.current.material.uniforms.u_metalness.value = 0;
-		refPlane.current.material.uniforms.u_reflectance.value = 0;
+		normalTexture.repeat.set(normalRepeatFactor.x, normalRepeatFactor.y);
 	});
 
 	return (
@@ -199,6 +240,12 @@ function Scene() {
 				receiveShadow
 				position-x={compareWithThreejs ? -1.5 : 0}
 				rotation-y={compareWithThreejs ? 0.05 * Math.PI : 0}
+				onBeforeRender={(gl, scene, camera, geo, mat) => {
+					copyMaterial.uniforms.u_texture.value = gl.getRenderTarget();
+					render(copyMaterial, transmissionRenderTarget);
+					mat.uniforms.u_transmissionSamplerMap.value = transmissionRenderTarget.texture;
+				}}
+				renderOrder={2}
 			>
 				<CustomMaterial />
 			</mesh>
@@ -222,14 +269,9 @@ function Scene() {
 						reflectivity={reflectance}
 						normalMap={normalTexture}
 						normalScale={normalScale}
-						envMap={envTexture}
 					/>
 				</mesh>
 			)}
-			<mesh ref={refPlane} receiveShadow position={[0, 0, -5]}>
-				<planeBufferGeometry args={[20, 20]} />
-				<CustomMaterial color="white" />
-			</mesh>
 			<Light spinning={spinningLight} />
 			<SceneManager />
 		</>
@@ -242,6 +284,7 @@ export function App() {
 			<Canvas
 				dpr={[1, 2]}
 				shadows={{ enabled: true, cookType: THREE.PCFShadowMap }}
+				linear
 				gl={{
 					powerPreference: 'high-performance',
 					antialias: false,

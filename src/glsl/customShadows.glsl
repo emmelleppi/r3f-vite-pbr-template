@@ -12,4 +12,4 @@ float shadow = 1.0;
 	#endif
 #endif
 
-gl_FragColor.rgb *= mix(0.25, 1.0, shadow);
+gl_FragColor.rgb *= mix(0.7 + 0.15 * (u_transmission * (1.0 - u_metalness)), 1.0, shadow);
