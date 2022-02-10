@@ -147,7 +147,7 @@ function Scene() {
 		'Edward Cullen',
 		{
 			glitter: { value: 0.45, min: 0, max: 1, step: 0.01 },
-			glitterDensity: { value: 3, min: 0, max: 3, step: 0.01 },
+			glitterDensity: { value: 4, min: 0, max: 4, step: 0.01 },
 			glitterColor: { value: '#3300ff' },
 		},
 		{ collapsed: true },
@@ -173,7 +173,7 @@ function Scene() {
 		'Sim stuff',
 		{
 			compareWithThreejs: false,
-			spinningLight: true,
+			spinningLight: false,
 		},
 		{ collapsed: true },
 	);
