@@ -1,5 +1,6 @@
 uniform float u_time;
 uniform vec3 u_color;
+uniform sampler2D u_baseTexture;
 uniform vec3 u_lightPosition;
 uniform vec3 u_ambientLight;
 
@@ -55,7 +56,7 @@ varying vec3 v_worldNormal;
 #include <common>
 #include <packing>
 #include <getBlueNoise>
-#include <shadowmap_pars_fragment>
+#include <customShadows_pars>
 #include <customPbr>
 
 
@@ -150,6 +151,9 @@ void main() {
     // colors
     vec3 color = blendAdd(u_color, u_glitterColor, glitter);
     vec3 baseTexture = vec3(1.0);
+    #ifdef USE_BASE_MAP
+        baseTexture = texture2D(u_baseTexture, v_uv).rgb;
+    #endif
     vec3 baseColor = color * baseTexture;
     vec3 emissive = vec3(0.0);
 

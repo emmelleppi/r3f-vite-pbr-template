@@ -10,7 +10,7 @@ import { useStore } from '@/store';
 const materialKey = Math.random();
 
 export function CustomMaterial(props) {
-	const { color = '#ffffff' } = props;
+	const { color = '#ffffff', baseMap } = props;
 
 	const bluenoiseTexture = useTexture('/assets/textures/bluenoise.webp');
 	const canvasGeneratedNoise = useStore(({ canvasGeneratedNoise }) => canvasGeneratedNoise);
@@ -26,13 +26,14 @@ export function CustomMaterial(props) {
 				u_time: { value: 0 },
 
 				u_color: { value: new THREE.Color(color) },
-				u_reflectance: { value: 1 },
+				u_baseTexture: { value: baseMap },
+				u_reflectance: { value: 0.5 },
 				u_directIntensity: { value: 1 },
 				u_indirectIntensity: { value: 0.5 },
 
 				u_isSuperRough: { value: false },
-				u_roughness: { value: 1 },
-				u_metalness: { value: 0 },
+				u_roughness: { value: 0.5 },
+				u_metalness: { value: 0.5 },
 
 				u_clearCoat: { value: 0 },
 				u_clearCoatRoughness: { value: 0 },
@@ -84,9 +85,12 @@ export function CustomMaterial(props) {
 		mat.defines.USE_METALNESS_MAP = false;
 		mat.defines.USE_NORMAL_MAP = true;
 		mat.defines.USE_ENV_MAP = true;
+		if (baseMap) {
+			mat.defines.USE_BASE_MAP = true;
+		}
 
 		return mat;
-	}, [materialKey]);
+	}, [materialKey, baseMap]);
 
 	React.useEffect(() => {
 		material.uniforms.u_color.value.set(color);

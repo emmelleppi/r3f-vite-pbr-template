@@ -5,6 +5,7 @@ import usePostprocessing from './use-postprocessing';
 
 import getBlueNoise from '@glsl/getBlueNoise.glsl';
 import customShadows from '@glsl/customShadows.glsl';
+import customShadows_pars from '@glsl/customShadows_pars.glsl';
 import customPbr from '@glsl/customPbr.glsl';
 
 export default function SceneManager() {
@@ -13,6 +14,7 @@ export default function SceneManager() {
 	useEffect(() => {
 		THREE.ShaderChunk['getBlueNoise'] = getBlueNoise;
 		THREE.ShaderChunk['customShadows'] = customShadows;
+		THREE.ShaderChunk['customShadows_pars'] = customShadows_pars;
 		THREE.ShaderChunk['customPbr'] = customPbr;
 	}, []);
 
