@@ -8,6 +8,7 @@ export const useStore = create(
 	immer(() => ({
 		light: null,
 		canvasGeneratedNoise: null,
+		envTexture: null,
 	})),
 );
 

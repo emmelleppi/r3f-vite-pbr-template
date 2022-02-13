@@ -85,10 +85,13 @@ void main() {
     
 
     // calculate world normal with normalMap
+    #ifdef USE_NORMAL_MAP
+        vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
+        N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
+    #endif
+    
+    // applies glitter noise to the normal
     vec3 glitterNoiseTexture = texture2D(u_glitterNoiseTexture, u_glitterDensity * v_uv).rgb * 2.0 - 1.0;
-    vec3 normalTexture = texture2D(u_normalTexture, u_normalRepeatFactor * v_uv).rgb * 2.0 - 1.0;
-    N = normalize(v_worldNormal) * faceDirection;
-    N = perturbNormal2Arb(v_viewPosition, N, normalTexture, faceDirection, u_normalScale);
     N = normalize(N + 0.5 * u_glitter * glitterNoiseTexture);
 
     // dot values
