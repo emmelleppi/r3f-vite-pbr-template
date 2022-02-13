@@ -1,6 +1,7 @@
 uniform float u_opacity;
 uniform float u_rand;
-uniform vec3 u_color;
+uniform float u_time;
+varying vec3 v_color;
 
 #include <common>
 #include <uv_pars_fragment>
@@ -45,7 +46,7 @@ void main() {
 
 	#include <clipping_planes_fragment>
 
-	vec3 diffuseColor = ((1.0 - 0.6 * invOpacity) * smoothedNdL +  0.5 * (1.0 - smoothedNdL)) * (u_color + 0.1 * invOpacity + NdL * 0.1) * invOpacity;
+	vec3 diffuseColor = ((1.0 - 0.6 * invOpacity) * smoothedNdL +  0.5 * (1.0 - smoothedNdL)) * (v_color + 0.1 * invOpacity + NdL * 0.1) * invOpacity;
 	diffuseColor = saturate(diffuseColor);
 
 	#include <map_fragment>
@@ -56,12 +57,11 @@ void main() {
 	// Higher precision equivalent of gl_FragCoord.z. This assumes depthRange has been left to its default values.
 	float fragCoordZ = 0.5 * vHighPrecisionZW[0] / vHighPrecisionZW[1] + 0.5;
 
-	float ditherFactor = bayerDither4x4( floor( mod( gl_FragCoord.xy, 4.0 ) ) ) / (16.0 + 16.0 * opacity);
-	if(ditherFactor > (0.5)) discard;
+	float ditherFactor = bayerDither4x4( floor( mod( gl_FragCoord.xy  + u_time * (1.0 + 8.0 * u_rand), 8.0) ) ) / (16.0 + 16.0 * opacity);
+	if(ditherFactor > 0.5) discard;
 
 	gl_FragColor.rgb = diffuseColor;
 	gl_FragColor.rgb += invOpacity * 0.5 * circle(gl_FragCoord.xy / 1024.0, 0.0002);
-
 	gl_FragColor.a = ( 1.0 - fragCoordZ );
 }
 

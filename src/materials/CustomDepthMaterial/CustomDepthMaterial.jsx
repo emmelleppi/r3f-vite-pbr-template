@@ -9,25 +9,26 @@ const materialKey = Math.random();
 export const customDepthUniforms = {
 	u_lightPosition: { value: new THREE.Vector3() },
 	u_opacity: { value: 0 },
+	u_time: { value: 0 },
 };
 
 export function CustomDepthMaterial(props) {
 	const { color = '#fff', uniforms = customDepthUniforms } = props;
 	const material = React.useMemo(() => {
-		const mat = new THREE.MeshDepthMaterial();
-		mat.type = 'ShaderMaterial';
-		mat.uniforms = {
-			...THREE.UniformsUtils.merge([THREE.ShaderLib.depth.uniforms]),
-			...uniforms,
-			u_color: { value: new THREE.Color('#000') },
-			u_rand: { value: Math.random() },
-		};
-		mat.vertexShader = vert;
-		mat.fragmentShader = frag;
+		const mat = new THREE.ShaderMaterial({
+			uniforms: {
+				...THREE.UniformsUtils.merge([THREE.ShaderLib.depth.uniforms]),
+				...uniforms,
+				u_color: { value: new THREE.Color('#000') },
+				u_rand: { value: Math.random() },
+			},
+			vertexShader: vert,
+			fragmentShader: frag,
+		});
 		mat.depthPacking = THREE.RGBADepthPacking;
 
 		mat.blending = THREE.CustomBlending;
-		mat.blendEquation = THREE.AddEquation; //default
+		mat.blendEquation = THREE.AddEquation;
 		mat.blendSrc = THREE.ZeroFactor;
 		mat.blendDst = THREE.SrcColorFactor;
 

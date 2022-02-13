@@ -10,4 +10,4 @@ vec4 shadow = vec4(1.0);
 	#pragma unroll_loop_end
 #endif
 
-gl_FragColor.rgb = blendDarken(gl_FragColor.rgb, shadow.rgb, (0.3 - 0.2 * (u_transmission * (1.0 - u_metalness))) * (1.0 - shadow.a));
+gl_FragColor.rgb *= mix(vec3(1.0), shadow.rgb, (0.3 - 0.2 * (u_transmission * (1.0 - u_metalness))) * (1.0 - shadow.a));

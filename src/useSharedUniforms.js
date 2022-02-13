@@ -122,6 +122,7 @@ export function useSharedUniforms() {
 
 		uniforms.u_deltaTime.value = dt;
 		uniforms.u_time.value += dt;
+		depthUniforms.u_time.value += dt;
 
 		uniforms.u_lightPosition.value.copy(light.position);
 

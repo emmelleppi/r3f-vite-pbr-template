@@ -15,18 +15,6 @@
 #endif
 
 
-float blendDarken(float base, float blend) {
-	return min(blend,base);
-}
-
-vec3 blendDarken(vec3 base, vec3 blend) {
-	return vec3(blendDarken(base.r,blend.r),blendDarken(base.g,blend.g),blendDarken(base.b,blend.b));
-}
-
-vec3 blendDarken(vec3 base, vec3 blend, float opacity) {
-	return (blendDarken(base, blend) * opacity + base * (1.0 - opacity));
-}
-
 vec4 texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
     vec4 shadow = texture2D( depths, uv );
     return vec4(shadow.rgb, step( compare, (shadow.a + 0.01) / (0.01 - 20.0) ));

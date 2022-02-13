@@ -1,5 +1,4 @@
 uniform float u_time;
-uniform vec3 u_color;
 uniform sampler2D u_baseTexture;
 uniform vec3 u_lightPosition;
 uniform vec3 u_ambientLight;
@@ -50,27 +49,41 @@ varying vec3 v_viewPosition;
 varying vec3 v_worldPosition;
 varying vec3 v_normal;
 varying vec3 v_worldNormal;
+varying vec3 v_color;
 
 #define receiveShadow true
+
+#pragma glslify: blendAdd = require(glsl-blend/add)
+#pragma glslify: blendAverage = require(glsl-blend/average)
+#pragma glslify: blendColorBurn = require(glsl-blend/color-burn)
+#pragma glslify: blendColorDodge = require(glsl-blend/color-dodge)
+#pragma glslify: blendDarken = require(glsl-blend/darken)
+#pragma glslify: blendDifference = require(glsl-blend/difference)
+#pragma glslify: blendExclusion = require(glsl-blend/exclusion)
+#pragma glslify: blendGlow = require(glsl-blend/glow)
+#pragma glslify: blendHardLight = require(glsl-blend/hard-light)
+#pragma glslify: blendHardMix = require(glsl-blend/hard-mix)
+#pragma glslify: blendLighten = require(glsl-blend/lighten)
+#pragma glslify: blendLinearBurn = require(glsl-blend/linear-burn)
+#pragma glslify: blendLinearDodge = require(glsl-blend/linear-dodge)
+#pragma glslify: blendLinearLight = require(glsl-blend/linear-light)
+#pragma glslify: blendMultiply = require(glsl-blend/multiply)
+#pragma glslify: blendNegation = require(glsl-blend/negation)
+#pragma glslify: blendNormal = require(glsl-blend/normal)
+#pragma glslify: blendOverlay = require(glsl-blend/overlay)
+#pragma glslify: blendPhoenix = require(glsl-blend/phoenix)
+#pragma glslify: blendPinLight = require(glsl-blend/pin-light)
+#pragma glslify: blendReflect = require(glsl-blend/reflect)
+#pragma glslify: blendScreen = require(glsl-blend/screen)
+#pragma glslify: blendSoftLight = require(glsl-blend/soft-light)
+#pragma glslify: blendSubtract = require(glsl-blend/subtract)
+#pragma glslify: blendVividLight = require(glsl-blend/vivid-light)
 
 #include <common>
 #include <packing>
 #include <getBlueNoise>
 #include <customShadows_pars>
 #include <customPbr>
-
-
-float blendAdd(float base, float blend) {
-	return min(base+blend,1.0);
-}
-
-vec3 blendAdd(vec3 base, vec3 blend) {
-	return min(base+blend,vec3(1.0));
-}
-
-vec3 blendAdd(vec3 base, vec3 blend, float opacity) {
-	return (blendAdd(base, blend) * opacity + base * (1.0 - opacity));
-}
 
 void main() {
     float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;
@@ -152,7 +165,7 @@ void main() {
 
 
     // colors
-    vec3 color = blendAdd(u_color, u_glitterColor, glitter);
+    vec3 color = blendAdd(v_color, u_glitterColor, glitter);
     vec3 baseTexture = vec3(1.0);
     #ifdef USE_BASE_MAP
         baseTexture = texture2D(u_baseTexture, v_uv).rgb;

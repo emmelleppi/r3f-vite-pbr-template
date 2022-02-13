@@ -24,9 +24,9 @@ export function Light({ spinning }) {
 
 		const time = clock.getElapsedTime();
 		if (spinning) {
-			light.position.y = 4 * Math.cos(time);
-			light.position.x = 4 * Math.sin(time);
-			light.position.z = 4 * Math.sin(time);
+			light.position.y = 2 * Math.cos(time);
+			light.position.x = 2 * Math.sin(time);
+			light.position.z = 2 * Math.sin(time);
 		} else {
 			light.position.set(1, -1, 3);
 		}

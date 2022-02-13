@@ -5,7 +5,7 @@ import * as THREE from 'three';
 import SceneManager from './SceneManager';
 import { useStore } from './store';
 import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
-import { OrbitControls, useGLTF, useTexture } from '@react-three/drei';
+import { Instance, Instances, OrbitControls, useGLTF, useTexture } from '@react-three/drei';
 import { Leva, useControls } from 'leva';
 import { useCopyMaterial, useFboRender } from './utils/helpers';
 import { CustomDepthMaterial } from './materials/CustomDepthMaterial/CustomDepthMaterial';
@@ -40,10 +40,14 @@ function Scene() {
 			}),
 	)[0];
 
-	const { showBgPlane, spinningLight } = useControls(
+	const { color } = useControls('Color', {
+		color: '#ff00ff',
+	});
+	const { showBgPlane, spinningLight, instances } = useControls(
 		'Sim stuff',
 		{
-			showBgPlane: true,
+			instances: false,
+			showBgPlane: false,
 			spinningLight: false,
 		},
 		{ collapsed: true },
@@ -111,13 +115,23 @@ function Scene() {
 		<>
 			<mesh onBeforeRender={onBeforeRender} renderOrder={2}></mesh>
 			<group ref={groupRef}>
-				<mesh geometry={nodes.Suzanne.geometry} position={[1, 0, -2]}>
+				<Instances
+					geometry={nodes.Suzanne.geometry}
+					limit={10}
+					range={10}
+					visible={instances}
+				>
 					<CustomMaterial color="green" uniforms={uniforms} useNormalTexture />
 					<CustomDepthMaterial color="green" uniforms={depthUniforms} />
-				</mesh>
-				<mesh geometry={nodes.Suzanne.geometry} position-x={2}>
-					<CustomMaterial color="red" uniforms={uniforms} useNormalTexture />
-					<CustomDepthMaterial color="red" uniforms={depthUniforms} />
+					<Instance scale={0.75} color="#ff0000" position={[-2, 0, -2]} />
+					<Instance scale={0.75} color="#ffff00" position={[-1, 0, -1]} />
+					<Instance scale={0.75} color="#00ff00" position={[0, 0, 0]} />
+					<Instance scale={0.75} color="#00ffff" position={[1, 0, -1]} />
+					<Instance scale={0.75} color="#0000ff" position={[2, 0, -2]} />
+				</Instances>
+				<mesh geometry={nodes.Suzanne.geometry} visible={!instances}>
+					<CustomMaterial color={color} uniforms={uniforms} useNormalTexture />
+					<CustomDepthMaterial color={color} uniforms={depthUniforms} />
 				</mesh>
 			</group>
 			<mesh ref={refPlane} position-z={-7}>
