@@ -14,7 +14,6 @@
 
 #endif
 
-
 vec4 texture2DCompare( sampler2D depths, vec2 uv, float compare ) {
     vec4 shadow = texture2D( depths, uv );
     return vec4(shadow.rgb, step( compare, (shadow.a + 0.01) / (0.01 - 20.0) ));
