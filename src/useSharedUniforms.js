@@ -28,10 +28,10 @@ export function useSharedUniforms() {
 		useControls(
 			'Base',
 			{
-				directIntensity: { value: 3, min: 0, max: 4, step: 0.01 },
-				indirectIntensity: { value: 0.8, min: 0, max: 4, step: 0.01 },
-				roughness: { value: 0.15, min: 0, max: 1, step: 0.01 },
-				metalness: { value: 0, min: 0, max: 1, step: 0.01 },
+				directIntensity: { value: 1.5, min: 0, max: 4, step: 0.01 },
+				indirectIntensity: { value: 2.5, min: 0, max: 4, step: 0.01 },
+				roughness: { value: 0.1, min: 0, max: 1, step: 0.01 },
+				metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
 				isSuperRough: { value: true, label: 'super-rough' },
 				reflectance: { value: 0.5, min: 0, max: 1, step: 0.01 },
 			},
@@ -41,8 +41,8 @@ export function useSharedUniforms() {
 	const { clearCoat, clearCoatRoughness } = useControls(
 		'Clearcoat',
 		{
-			clearCoat: { value: 0, min: 0, max: 1, step: 0.01 },
-			clearCoatRoughness: { value: 0, min: 0, max: 1, step: 0.01 },
+			clearCoat: { value: 0.35, min: 0, max: 1, step: 0.01 },
+			clearCoatRoughness: { value: 0.7, min: 0, max: 1, step: 0.01 },
 		},
 		{ collapsed: true },
 	);
@@ -50,7 +50,7 @@ export function useSharedUniforms() {
 		'Transmission',
 		{
 			transmission: { value: 1, min: 0, max: 1, step: 0.01 },
-			thickness: { value: 1, min: 0, max: 1, step: 0.01 },
+			thickness: { value: 0.65, min: 0, max: 1, step: 0.01 },
 			ior: { value: 1.4, min: 1, max: 1.5, step: 0.01 },
 		},
 		{ collapsed: true },
@@ -59,9 +59,9 @@ export function useSharedUniforms() {
 	const { sheenColor, sheen, sheenRoughness } = useControls(
 		'Sheen',
 		{
-			sheen: { value: 1, min: 0, max: 1, step: 0.01 },
-			sheenRoughness: { value: 0.5, min: 0, max: 1, step: 0.01 },
-			sheenColor: '#f6b6ff',
+			sheen: { value: 0.7, min: 0, max: 1, step: 0.01 },
+			sheenRoughness: { value: 1.0, min: 0, max: 1, step: 0.01 },
+			sheenColor: '#cefdff',
 		},
 		{ collapsed: true },
 	);
@@ -69,9 +69,9 @@ export function useSharedUniforms() {
 	const { glitter, glitterDensity, glitterColor } = useControls(
 		'Edward Cullen',
 		{
-			glitter: { value: 0, min: 0, max: 1, step: 0.01 },
-			glitterDensity: { value: 4, min: 0, max: 4, step: 0.01 },
-			glitterColor: { value: '#3300ff' },
+			glitter: { value: 0.6, min: 0, max: 1, step: 0.01 },
+			glitterDensity: { value: 3.6, min: 0, max: 4, step: 0.01 },
+			glitterColor: { value: '#8dc8eb' },
 		},
 		{ collapsed: true },
 	);
@@ -79,7 +79,7 @@ export function useSharedUniforms() {
 	const { normalRepeatFactor, normalScale, normalMap } = useControls(
 		'Normal Map',
 		{
-			normalScale: { value: 0.1, min: 0, max: 1, step: 0.01 },
+			normalScale: { value: 0.5, min: 0, max: 1, step: 0.01 },
 			normalRepeatFactor: {
 				value: { x: 5, y: 5 },
 				step: 0.1,
@@ -87,7 +87,7 @@ export function useSharedUniforms() {
 				max: 10,
 				joystick: 'invertY',
 			},
-			normalMap: { value: 49, min: 0, max: 74, step: 1 },
+			normalMap: { value: 8, min: 0, max: 74, step: 1 },
 		},
 		{ collapsed: true },
 	);

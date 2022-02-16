@@ -44,13 +44,13 @@ function Scene() {
 	)[0];
 
 	const { color } = useControls('Color', {
-		color: '#ff00ff',
+		color: '#2f79db',
 	});
 	const { showBgPlane, spinningLight, instances } = useControls(
 		'Sim stuff',
 		{
-			instances: true,
-			showBgPlane: true,
+			instances: false,
+			showBgPlane: false,
 			spinningLight: false,
 		},
 		{ collapsed: true },
