@@ -9,6 +9,7 @@
 		"glsl-noise": "^0.0.0",
 		"immer": "^9.0.7",
 		"leva": "^0.9.16",
+		"nice-color-palettes": "^3.0.0",
 		"postprocessing": "^6.23.5",
 		"react": "^17.0.2",
 		"react-device-detect": "^2.1.2",

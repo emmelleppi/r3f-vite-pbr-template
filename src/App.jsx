@@ -1,6 +1,7 @@
 import React from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import palette from 'nice-color-palettes';
 
 import SceneManager from './SceneManager';
 import { useStore } from './store';
@@ -11,6 +12,8 @@ import { useCopyMaterial, useFboRender } from './utils/helpers';
 import { CustomDepthMaterial } from './materials/CustomDepthMaterial/CustomDepthMaterial';
 import { Light } from './Light';
 import { useSharedUniforms } from './useSharedUniforms';
+
+const colors = palette[Math.floor(100 * Math.random())];
 
 function Scene() {
 	const groupRef = React.useRef();
@@ -46,8 +49,8 @@ function Scene() {
 	const { showBgPlane, spinningLight, instances } = useControls(
 		'Sim stuff',
 		{
-			instances: false,
-			showBgPlane: false,
+			instances: true,
+			showBgPlane: true,
 			spinningLight: false,
 		},
 		{ collapsed: true },
@@ -123,11 +126,11 @@ function Scene() {
 				>
 					<CustomMaterial color="green" uniforms={uniforms} useNormalTexture />
 					<CustomDepthMaterial color="green" uniforms={depthUniforms} />
-					<Instance scale={0.75} color="#ff0000" position={[-2, 0, -2]} />
-					<Instance scale={0.75} color="#ffff00" position={[-1, 0, -1]} />
-					<Instance scale={0.75} color="#00ff00" position={[0, 0, 0]} />
-					<Instance scale={0.75} color="#00ffff" position={[1, 0, -1]} />
-					<Instance scale={0.75} color="#0000ff" position={[2, 0, -2]} />
+					<Instance scale={0.75} color={colors[0]} position={[-2, 0, -2]} />
+					<Instance scale={0.75} color={colors[1]} position={[-1, 0, -1]} />
+					<Instance scale={0.75} color={colors[2]} position={[0, 0, 0]} />
+					<Instance scale={0.75} color={colors[3]} position={[1, 0, -1]} />
+					<Instance scale={0.75} color={colors[4]} position={[2, 0, -2]} />
 				</Instances>
 				<mesh geometry={nodes.Suzanne.geometry} visible={!instances}>
 					<CustomMaterial color={color} uniforms={uniforms} useNormalTexture />

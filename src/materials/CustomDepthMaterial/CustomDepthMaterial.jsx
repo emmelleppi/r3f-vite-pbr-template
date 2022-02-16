@@ -14,6 +14,7 @@ export const customDepthUniforms = {
 
 export function CustomDepthMaterial(props) {
 	const { color = '#fff', uniforms = customDepthUniforms } = props;
+
 	const material = React.useMemo(() => {
 		const mat = new THREE.ShaderMaterial({
 			uniforms: {
@@ -29,8 +30,8 @@ export function CustomDepthMaterial(props) {
 
 		mat.blending = THREE.CustomBlending;
 		mat.blendEquation = THREE.AddEquation;
-		mat.blendSrc = THREE.ZeroFactor;
-		mat.blendDst = THREE.SrcColorFactor;
+		mat.blendSrc = 204;
+		mat.blendDst = 202;
 
 		return mat;
 	}, [materialKey, uniforms]);
@@ -41,3 +42,12 @@ export function CustomDepthMaterial(props) {
 
 	return <primitive object={material} attach="customDepthMaterial" />;
 }
+
+// 208-210
+// 208-200
+// 200-202
+// 201-202
+// 202-202
+// 203-202 --
+// 205-202 --
+// 210-202 --

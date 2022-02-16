@@ -20,23 +20,13 @@ float circle(vec2 _st, float _radius){
 	return 1.-smoothstep(_radius-(_radius * 10.),_radius+(_radius * 10.), dot(pos,pos));
 }
 
-float bayerDither2x2( vec2 v ) {
-	return mod( 3.0 * v.y + 2.0 * v.x, 4.0 );
-}
-
-float bayerDither4x4( vec2 v ) {
-	vec2 P1 = mod( v, 2.0 );
-	vec2 P2 = mod( floor( 0.5  * v ), 2.0 );
-	return 4.0 * bayerDither2x2( P1 ) + bayerDither2x2( P2 );
-}
-
 float easeOutExpo(float x) {
 	return saturate(1.0 - pow(2.0, -10.0 * x));
 }
 
 void main() {
 	float opacity = u_opacity;
-	float invOpacity = 1.0 - u_opacity;
+	float invOpacity = pow(1.0 - u_opacity, 2.0);
 
 	vec3 N = normalize(v_normal);
     vec3 V = normalize(cameraPosition - v_viewPosition);
@@ -56,9 +46,6 @@ void main() {
 
 	// Higher precision equivalent of gl_FragCoord.z. This assumes depthRange has been left to its default values.
 	float fragCoordZ = 0.5 * vHighPrecisionZW[0] / vHighPrecisionZW[1] + 0.5;
-
-	float ditherFactor = bayerDither4x4( floor( mod( gl_FragCoord.xy  + u_time * (1.0 + 8.0 * u_rand), 8.0) ) ) / (16.0 + 16.0 * opacity);
-	if(ditherFactor > 0.5) discard;
 
 	gl_FragColor.rgb = diffuseColor;
 	gl_FragColor.rgb += invOpacity * 0.5 * circle(gl_FragCoord.xy / 1024.0, 0.0002);
