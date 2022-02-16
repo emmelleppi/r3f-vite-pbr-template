@@ -29,9 +29,9 @@ export function CustomDepthMaterial(props) {
 		mat.depthPacking = THREE.RGBADepthPacking;
 
 		mat.blending = THREE.CustomBlending;
-		mat.blendEquation = THREE.AddEquation;
-		mat.blendSrc = 204;
-		mat.blendDst = 202;
+		mat.blendEquation = THREE.MultiplyBlending;
+		mat.blendSrc = THREE.ZeroFactor;
+		mat.blendDst = THREE.SrcColorFactor;
 
 		return mat;
 	}, [materialKey, uniforms]);

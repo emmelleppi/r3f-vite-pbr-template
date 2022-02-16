@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import * as THREE from 'three';
 
-import usePostprocessing from './use-postprocessing';
+import usePostprocessing from './usePostprocessing';
 
 import getBlueNoise from '@glsl/getBlueNoise.glsl';
 import customShadows from '@glsl/customShadows.glsl';
