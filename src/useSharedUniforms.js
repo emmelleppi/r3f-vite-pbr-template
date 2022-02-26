@@ -11,7 +11,7 @@ import { customDepthUniforms } from './materials/CustomDepthMaterial/CustomDepth
 import { clamp } from './utils/math';
 import { useNormalTexture } from './utils/useNormalTexture';
 
-export function useSharedUniforms() {
+export function useSharedUniforms(store, isLiquid) {
 	const uniforms = React.useState(() => THREE.UniformsUtils.merge([customUniforms]))[0];
 	const depthUniforms = React.useState(() => THREE.UniformsUtils.merge([customDepthUniforms]))[0];
 
@@ -30,58 +30,58 @@ export function useSharedUniforms() {
 			{
 				directIntensity: { value: 1.5, min: 0, max: 4, step: 0.01 },
 				indirectIntensity: { value: 2.5, min: 0, max: 4, step: 0.01 },
-				roughness: { value: 0.1, min: 0, max: 1, step: 0.01 },
+				roughness: { value: 0.0, min: 0, max: 1, step: 0.01 },
 				metalness: { value: 0.1, min: 0, max: 1, step: 0.01 },
-				isSuperRough: { value: true, label: 'super-rough' },
+				isSuperRough: { value: false, label: 'super-rough' },
 				reflectance: { value: 0.5, min: 0, max: 1, step: 0.01 },
 			},
-			{ collapsed: true },
+			{ collapsed: true, store },
 		);
 
 	const { clearCoat, clearCoatRoughness } = useControls(
 		'Clearcoat',
 		{
-			clearCoat: { value: 0.35, min: 0, max: 1, step: 0.01 },
-			clearCoatRoughness: { value: 0.7, min: 0, max: 1, step: 0.01 },
+			clearCoat: { value: 1, min: 0, max: 1, step: 0.01 },
+			clearCoatRoughness: { value: 0.3, min: 0, max: 1, step: 0.01 },
 		},
-		{ collapsed: true },
+		{ collapsed: true, store },
 	);
 	const { transmission, thickness, ior } = useControls(
 		'Transmission',
 		{
 			transmission: { value: 1, min: 0, max: 1, step: 0.01 },
-			thickness: { value: 0.65, min: 0, max: 1, step: 0.01 },
-			ior: { value: 1.4, min: 1, max: 1.5, step: 0.01 },
+			thickness: { value: 0, min: 0, max: 1, step: 0.01 },
+			ior: { value: 1.2, min: 1, max: 1.5, step: 0.01 },
 		},
-		{ collapsed: true },
+		{ collapsed: true, store },
 	);
 
 	const { sheenColor, sheen, sheenRoughness } = useControls(
 		'Sheen',
 		{
-			sheen: { value: 0.7, min: 0, max: 1, step: 0.01 },
+			sheen: { value: 0, min: 0, max: 1, step: 0.01 },
 			sheenRoughness: { value: 1.0, min: 0, max: 1, step: 0.01 },
-			sheenColor: '#cefdff',
+			sheenColor: '#ffffff',
 		},
-		{ collapsed: true },
+		{ collapsed: true, store },
 	);
 
 	const { glitter, glitterDensity, glitterColor } = useControls(
 		'Edward Cullen',
 		{
-			glitter: { value: 0.6, min: 0, max: 1, step: 0.01 },
-			glitterDensity: { value: 3.6, min: 0, max: 4, step: 0.01 },
-			glitterColor: { value: '#8dc8eb' },
+			glitter: { value: 0, min: 0, max: 1, step: 0.01 },
+			glitterDensity: { value: 0.75, min: 0, max: 4, step: 0.01 },
+			glitterColor: { value: '#ffffff' },
 		},
-		{ collapsed: true },
+		{ collapsed: true, store },
 	);
 
 	const { normalRepeatFactor, normalScale, normalMap } = useControls(
 		'Normal Map',
 		{
-			normalScale: { value: 0.5, min: 0, max: 1, step: 0.01 },
+			normalScale: { value: 0.2, min: 0, max: 1, step: 0.01 },
 			normalRepeatFactor: {
-				value: { x: 5, y: 5 },
+				value: { x: 8, y: 8 },
 				step: 0.1,
 				min: 0,
 				max: 10,
@@ -89,7 +89,7 @@ export function useSharedUniforms() {
 			},
 			normalMap: { value: 8, min: 0, max: 74, step: 1 },
 		},
-		{ collapsed: true },
+		{ collapsed: true, store },
 	);
 
 	const normalTexture = useNormalTexture(normalMap);

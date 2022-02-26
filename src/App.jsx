@@ -4,14 +4,18 @@ import * as THREE from 'three';
 import palette from 'nice-color-palettes';
 
 import SceneManager from './SceneManager';
-import { useStore } from './store';
-import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
+import { levaStore, levaStoreLiquid, useStore } from './store';
 import { Instance, Instances, OrbitControls, useGLTF, useTexture } from '@react-three/drei';
-import { Leva, useControls } from 'leva';
+import { LevaPanel, useControls, useCreateStore } from 'leva';
 import { useCopyMaterial, useFboRender } from './utils/helpers';
 import { CustomDepthMaterial } from './materials/CustomDepthMaterial/CustomDepthMaterial';
 import { Light } from './Light';
 import { useSharedUniforms } from './useSharedUniforms';
+import mergeRefs from 'react-merge-refs';
+import { useLiquid } from './utils/useLiquid';
+import { CustomMaterial } from './materials/CustomMaterial/CustomMaterial';
+import { useSharedLiquidUniforms } from './useSharedLiquidUniforms';
+import { fit } from './utils/math';
 
 const colors = palette[Math.floor(100 * Math.random())];
 
@@ -23,7 +27,9 @@ function Scene() {
 	const { nodes } = useGLTF('/assets/suzanne-draco.glb', true);
 	const directionalLight = useStore(({ light }) => light);
 	const bgTexture = useTexture('/assets/textures/cloud.png');
-	const [uniforms, depthUniforms] = useSharedUniforms();
+
+	const [uniforms, depthUniforms] = useSharedUniforms(levaStore.current);
+	const [uniformsLiquid, uniformsLiquidDepth] = useSharedLiquidUniforms(levaStoreLiquid.current);
 
 	const gl = useThree(({ gl }) => gl);
 	const scene = useThree(({ scene }) => scene);
@@ -43,18 +49,41 @@ function Scene() {
 			}),
 	)[0];
 
-	const { color } = useControls('Color', {
-		color: '#2f79db',
-	});
-	const { showBgPlane, spinningLight, instances } = useControls(
-		'Sim stuff',
+	const { color } = useControls(
+		'Color',
 		{
-			instances: false,
+			color: '#ffffff',
+		},
+		{ collapsed: true, store: levaStore.current },
+	);
+	const { liquidColor } = useControls(
+		'Color',
+		{
+			liquidColor: '#00ff44',
+		},
+		{ collapsed: true, store: levaStoreLiquid.current },
+	);
+	const [{ showBgPlane, spinningLight, instances, addLiquid }, set] = useControls(
+		'Sim stuff',
+		() => ({
 			showBgPlane: false,
 			spinningLight: false,
-		},
-		{ collapsed: true },
+			instances: false,
+			addLiquid: true,
+		}),
+		{ collapsed: true, store: levaStore.current },
 	);
+
+	React.useEffect(() => {
+		if (addLiquid) {
+			set({ instances: false });
+		}
+	}, [addLiquid, set]);
+	React.useEffect(() => {
+		if (instances) {
+			set({ addLiquid: false });
+		}
+	}, [instances, set]);
 
 	const onBeforeRender = React.useCallback(
 		(gl) => {
@@ -70,6 +99,8 @@ function Scene() {
 		},
 		[render, copyMaterial],
 	);
+
+	const [liquidRef, liquidGroupRef] = useLiquid(addLiquid);
 
 	useFrame(({ gl }) => {
 		// render the shadow color material
@@ -98,7 +129,7 @@ function Scene() {
 		groupRef.current.traverse((c) => {
 			if (c.isMesh && c.customMaterial) {
 				c.material = c.customMaterial;
-				c.renderOrder = 2;
+				c.renderOrder = c.material.defines.USE_LIQUID ? 2 : 3;
 			}
 		});
 
@@ -112,17 +143,21 @@ function Scene() {
 			useStore.getState().envTexture.image.width,
 			useStore.getState().envTexture.image.height,
 		);
+		if (!addLiquid || instances) {
+			groupRef.current.position.set(0, 0, 0);
+		}
 	});
 
 	return (
 		<>
-			<mesh onBeforeRender={onBeforeRender} renderOrder={2}></mesh>
-			<group ref={groupRef}>
+			<group ref={mergeRefs([groupRef, liquidGroupRef])}>
 				<Instances
 					geometry={nodes.Suzanne.geometry}
 					limit={10}
 					range={10}
 					visible={instances}
+					onBeforeRender={onBeforeRender}
+					renderOrder={3}
 				>
 					<CustomMaterial color="green" uniforms={uniforms} useNormalTexture />
 					<CustomDepthMaterial color="green" uniforms={depthUniforms} />
@@ -132,9 +167,25 @@ function Scene() {
 					<Instance scale={0.75} color={colors[3]} position={[1, 0, -1]} />
 					<Instance scale={0.75} color={colors[4]} position={[2, 0, -2]} />
 				</Instances>
-				<mesh geometry={nodes.Suzanne.geometry} visible={!instances}>
+				<mesh visible={!instances} onBeforeRender={onBeforeRender} renderOrder={3}>
+					{addLiquid ? (
+						<octahedronBufferGeometry args={[1, 16]} />
+					) : (
+						<primitive attach="geometry" object={nodes.Suzanne.geometry} />
+					)}
 					<CustomMaterial color={color} uniforms={uniforms} useNormalTexture />
 					<CustomDepthMaterial color={color} uniforms={depthUniforms} />
+				</mesh>
+				<mesh
+					ref={liquidRef}
+					visible={addLiquid}
+					onBeforeRender={onBeforeRender}
+					renderOrder={2}
+					scale={0.97}
+				>
+					<octahedronBufferGeometry args={[1, 16]} />
+					<CustomMaterial color={liquidColor} uniforms={uniformsLiquid} isLiquid />
+					<CustomDepthMaterial color={liquidColor} uniforms={uniformsLiquidDepth} />
 				</mesh>
 			</group>
 			<mesh ref={refPlane} position-z={-7}>
@@ -143,11 +194,17 @@ function Scene() {
 			</mesh>
 			<Light spinning={spinningLight} />
 			<SceneManager />
+			<OrbitControls enabled={!addLiquid} />
 		</>
 	);
 }
 
 export function App() {
+	const store1 = useCreateStore();
+	const store2 = useCreateStore();
+	levaStore.current = store1;
+	levaStoreLiquid.current = store2;
+
 	return (
 		<div id="app">
 			<Canvas
@@ -170,9 +227,51 @@ export function App() {
 				<React.Suspense fallback={null}>
 					<Scene />
 				</React.Suspense>
-				<OrbitControls />
 			</Canvas>
-			<Leva hideCopyButton theme={{ sizes: { rootWidth: '20rem' } }} />
+			<div
+				style={{
+					position: 'fixed',
+					top: 0,
+					right: 0,
+					height: '100%',
+					overflow: 'auto',
+				}}
+			>
+				<LevaPanel
+					fill
+					store={store1}
+					hideCopyButton
+					titleBar={{
+						drag: false,
+						filter: false,
+						title: 'Default',
+					}}
+					collapsed={true}
+					theme={{ sizes: { rootWidth: '20rem' } }}
+				/>
+			</div>
+			<div
+				style={{
+					position: 'fixed',
+					top: 0,
+					left: 0,
+					height: '100%',
+					overflow: 'auto',
+				}}
+			>
+				<LevaPanel
+					fill
+					store={store2}
+					hideCopyButton
+					collapsed={true}
+					titleBar={{
+						drag: false,
+						filter: false,
+						title: 'Liquid',
+					}}
+					theme={{ sizes: { rootWidth: '20rem' } }}
+				/>
+			</div>
 		</div>
 	);
 }

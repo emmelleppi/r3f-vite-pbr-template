@@ -51,6 +51,12 @@ varying vec3 v_normal;
 varying vec3 v_worldNormal;
 varying vec3 v_color;
 
+#ifdef USE_LIQUID
+	varying float v_fillEdge;
+	varying vec3 v_worldInnerNormal;
+	varying vec3 v_innerNormal;
+#endif
+
 #define receiveShadow true
 
 #pragma glslify: blendAdd = require(glsl-blend/add)
@@ -62,12 +68,31 @@ varying vec3 v_color;
 #include <customPbr>
 
 void main() {
+    #ifdef USE_LIQUID
+            float foam = step(v_fillEdge, 0.5) - step(v_fillEdge, (0.5 - 0.01));
+            float result = step(v_fillEdge, 0.5) - foam;
+
+            if (foam + result < 0.5) {
+              discard;
+            }
+    #endif
+
     float faceDirection = gl_FrontFacing ? 1.0 : - 1.0;
     vec3 blueNoise = getBlueNoise(gl_FragCoord.xy);
 
+    vec3 worldNormal = v_worldNormal;
 
     // normal, light and view vectors
-    vec3 N = normalize(v_worldNormal) * faceDirection;
+    vec3 N = normalize(worldNormal) * faceDirection;
+    
+    #ifdef USE_LIQUID
+        if (faceDirection < 0.0) {
+            worldNormal = normalize(v_worldInnerNormal);
+        }
+        N = worldNormal;
+    #endif
+
+
     vec3 L = normalize(u_lightPosition - v_worldPosition);
     vec3 V = normalize(cameraPosition - v_worldPosition);
     vec3 H = normalize(L + V);
@@ -89,15 +114,15 @@ void main() {
     float NdH = saturate(dot(N, H));
     float LdH = saturate(dot(L, H));
     float LdV = saturate(dot(L, V));
-    float WNdV = abs(dot(v_worldNormal, V)) + 1e-5;
-    float WNdH = saturate(dot(v_worldNormal, H));
-    float WNdL = saturate(dot(v_worldNormal, L));
+    float WNdV = abs(dot(worldNormal, V)) + 1e-5;
+    float WNdH = saturate(dot(worldNormal, H));
+    float WNdL = saturate(dot(worldNormal, L));
 
 
     // reflected normals
     vec3 invertedX_N = vec3(-N.x, N.y, N.z); // dont ask me why....
     vec3 refl = reflect(-V, invertedX_N);
-    vec3 Wrefl = reflect(-V, normalize(v_worldNormal) * faceDirection);
+    vec3 Wrefl = reflect(-V, normalize(worldNormal) * faceDirection);
 
 
     // glitter factor
@@ -142,6 +167,16 @@ void main() {
 
     // colors
     vec3 color = blendAdd(v_color, u_glitterColor, glitter);
+        
+    #ifdef USE_LIQUID
+        vec3 topColor = saturate(color + 0.5);
+        vec3 foamColor = foam * (topColor * 0.9);
+        vec3 liquidColor = result * color;
+        vec3 liquidResult = liquidColor + foamColor;				
+        vec3 topLiquidColor = topColor * (foam + result);
+        color = gl_FrontFacing ? liquidResult : topLiquidColor;
+    #endif
+
     vec3 baseTexture = vec3(1.0);
     #ifdef USE_BASE_MAP
         baseTexture = texture2D(u_baseTexture, v_uv).rgb;

@@ -56,8 +56,20 @@ export const customUniforms = {
 	u_transmissionSamplerMap: { value: null },
 };
 
+const liquidUniforms = {
+	u_fillAmount: { value: 0.5 },
+	u_wobbleX: { value: 0 },
+	u_wobbleZ: { value: 0 },
+};
+
 export function CustomMaterial(props) {
-	const { color = '#ffffff', useBaseMap, useNormalTexture, uniforms = customUniforms } = props;
+	const {
+		color = '#ffffff',
+		useBaseMap,
+		useNormalTexture,
+		uniforms = customUniforms,
+		isLiquid,
+	} = props;
 
 	const material = React.useMemo(() => {
 		const mergedUniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.lights]);
@@ -68,6 +80,7 @@ export function CustomMaterial(props) {
 			uniforms: {
 				...mergedUniforms,
 				...uniforms,
+				...(isLiquid && liquidUniforms),
 				u_color: { value: new THREE.Color('#fff') },
 			},
 			lights: true,
@@ -82,6 +95,10 @@ export function CustomMaterial(props) {
 		}
 		if (useBaseMap) {
 			mat.defines.USE_BASE_MAP = true;
+		}
+		if (isLiquid) {
+			mat.defines.USE_LIQUID = true;
+			mat.side = 2;
 		}
 
 		return mat;

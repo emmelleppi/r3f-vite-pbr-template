@@ -1,8 +1,12 @@
+import { createRef } from 'react';
 import create from 'zustand';
 import produce from 'immer';
 import * as THREE from 'three';
 
 const immer = (config) => (set, get, api) => config((fn) => set(produce(fn)), get, api);
+
+export const levaStore = createRef();
+export const levaStoreLiquid = createRef();
 
 export const useStore = create(
 	immer(() => ({
