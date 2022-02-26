@@ -299,7 +299,7 @@ void main() {
         thicknessFactor,
         Fr.r * NdL
     ).rgb;
-    totalDiffuse = mix( totalDiffuse, transmission, transmissionFactor );
+    totalDiffuse = saturate(mix( totalDiffuse, transmission, transmissionFactor ));
 
 
     // Final
