@@ -69,7 +69,7 @@ function Scene() {
 			showBgPlane: false,
 			spinningLight: false,
 			instances: false,
-			addLiquid: true,
+			addLiquid: false,
 		}),
 		{ collapsed: true, store: levaStore.current },
 	);
@@ -246,7 +246,7 @@ export function App() {
 						filter: false,
 						title: 'Default',
 					}}
-					collapsed={true}
+					collapsed={false}
 					theme={{ sizes: { rootWidth: '20rem' } }}
 				/>
 			</div>
